@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-path name="external_files" path="." />
+    <external-files-path name="app_external" path="." />
+    <!-- Cover SD cards / secondary volumes (/storage/XXXX-XXXX) and other
+         non-standard partitions so previewing a duplicate there does not throw
+         FileUriExposedException / SecurityException. -->
+    <root-path name="root" path="/storage/" />
+</paths>

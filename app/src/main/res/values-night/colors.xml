@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark counterparts of the DESIGN §1.1 tokens. Layouts reference tokens only,
+     so the night qualifier is the single switch point for the whole dark theme. -->
+<resources>
+    <color name="primary">#7A7AF5</color>
+    <color name="primary_dark">#A6A6FA</color>
+    <color name="primary_container">#26284F</color>
+
+    <color name="surface">#0F1117</color>
+    <color name="card_surface">#171B24</color>
+    <color name="card_stroke">#262C38</color>
+
+    <color name="text_primary">#ECEEF4</color>
+    <color name="text_secondary">#A3AAB6</color>
+    <color name="text_tertiary">#6E7683</color>
+
+    <color name="success">#3FBE74</color>
+    <color name="success_container">#16301F</color>
+    <color name="warning">#F2A93B</color>
+    <color name="warning_container">#33260E</color>
+    <color name="danger">#F06065</color>
+    <color name="danger_container">#3A181A</color>
+    <color name="premium_gold">#F5B301</color>
+    <color name="premium_gold_container">#33290A</color>
+
+    <color name="track">#262C38</color>
+
+    <color name="icon_bg_images">#16301F</color>
+</resources>

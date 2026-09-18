@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_main"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/onboardingFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.onboarding.OnboardingFragment"
+        android:label="Onboarding" />
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.home.HomeFragment"
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/resultsFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.results.ResultsFragment"
+        android:label="Results" />
+
+    <fragment
+        android:id="@+id/cleanupFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.cleanup.CleanupFragment"
+        android:label="Cleanup" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.settings.SettingsFragment"
+        android:label="Settings" />
+
+    <fragment
+        android:id="@+id/scanFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.scan.ScanFragment"
+        android:label="Scan" />
+
+    <fragment
+        android:id="@+id/reviewDeleteFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.reviewdelete.ReviewDeleteFragment"
+        android:label="Review &amp; Delete" />
+
+    <fragment
+        android:id="@+id/deleteFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.delete.DeleteFragment"
+        android:label="Delete" />
+
+    <fragment
+        android:id="@+id/premiumFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.premium.PremiumFragment"
+        android:label="Premium" />
+
+    <fragment
+        android:id="@+id/recycleBinFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.settings.RecycleBinFragment"
+        android:label="Recycle Bin" />
+
+    <fragment
+        android:id="@+id/previewFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.cleanup.PreviewFragment"
+        android:label="Preview" />
+</navigation>

@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface">
+
+    <TextView
+        android:id="@+id/title"
+        style="@style/Text.Title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="14dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="@string/duplicate_files"
+        app:layout_constraintEnd_toStartOf="@id/searchButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/searchButton"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginEnd="12dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="10dp"
+        android:src="@drawable/ic_search"
+        app:tint="@color/text_primary"
+        android:contentDescription="@string/cd_search"
+        app:layout_constraintBottom_toBottomOf="@id/title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/title" />
+
+    <EditText
+        android:id="@+id/searchField"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/bg_search_field"
+        android:drawableStart="@drawable/ic_search"
+        android:drawablePadding="8dp"
+        android:hint="@string/search_hint"
+        android:imeOptions="actionSearch"
+        android:importantForAutofill="no"
+        android:inputType="text"
+        android:maxLines="1"
+        android:paddingHorizontal="14dp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_tertiary"
+        android:textSize="15sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        tools:visibility="visible" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toTopOf="@id/bottomBar"
+        app:layout_constraintTop_toBottomOf="@id/searchField">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:clipToPadding="false"
+                android:paddingHorizontal="16dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/categoryChips"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <!-- Stat grid 2x2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:paddingHorizontal="16dp"
+                android:orientation="horizontal">
+
+                <LinearLayout style="@style/StatCell"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/primary_container">
+                    <ImageView android:layout_width="26dp" android:layout_height="26dp" android:src="@drawable/ic_doc" app:tint="@color/primary" android:contentDescription="@null" />
+                    <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/total_duplicates" />
+                    <TextView android:id="@+id/statTotalDup" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="1,234" />
+                    <TextView style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/files_label" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/StatCell"
+                    android:layout_marginStart="6dp"
+                    android:backgroundTint="@color/danger_container">
+                    <ImageView android:layout_width="26dp" android:layout_height="26dp" android:src="@drawable/ic_sort" app:tint="@color/danger" android:contentDescription="@null" />
+                    <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/duplicate_size" />
+                    <TextView android:id="@+id/statDupSize" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="1.78 GB" />
+                    <TextView android:id="@+id/statDupPercent" style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/danger" tools:text="36% of total space" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:paddingHorizontal="16dp"
+                android:orientation="horizontal">
+
+                <LinearLayout style="@style/StatCell"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/success_container">
+                    <ImageView android:layout_width="26dp" android:layout_height="26dp" android:src="@drawable/ic_grid" android:contentDescription="@null" />
+                    <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/duplicate_groups" />
+                    <TextView android:id="@+id/statGroups" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="45" />
+                    <TextView style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/groups_label" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/StatCell"
+                    android:layout_marginStart="6dp"
+                    android:backgroundTint="@color/warning_container">
+                    <ImageView android:layout_width="26dp" android:layout_height="26dp" android:src="@drawable/ic_trash" app:tint="@color/warning" android:contentDescription="@null" />
+                    <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/marked_for_deletion" />
+                    <TextView android:id="@+id/statMarked" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" tools:text="560 MB" />
+                    <TextView android:id="@+id/statMarkedFiles" style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/warning" tools:text="320 Files Selected" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Sort row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:layout_marginHorizontal="16dp"
+                android:background="@drawable/bg_card"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp">
+
+                <HorizontalScrollView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/sort_by" />
+                        <TextView android:id="@+id/sortSize" style="@style/SortChip" android:text="@string/sort_size" />
+                        <TextView android:id="@+id/sortName" style="@style/SortChip" android:text="@string/sort_name" />
+                        <TextView android:id="@+id/sortDup" style="@style/SortChip" android:text="@string/sort_duplicates" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <ImageView android:id="@+id/sortDirection" android:layout_width="26dp" android:layout_height="26dp" android:layout_marginStart="8dp" android:src="@drawable/ic_swap" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/cd_sort_direction" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/groupList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:paddingHorizontal="16dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/item_group_card" />
+
+            <TextView
+                android:id="@+id/emptyText"
+                style="@style/Text.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="40dp"
+                android:text="@string/empty_results_title"
+                android:visibility="gone" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Sticky bottom bar -->
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/card_surface"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/selectedCount"
+                style="@style/Text.Body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                tools:text="0 files selected" />
+
+            <TextView
+                android:id="@+id/selectedSize"
+                style="@style/Text.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="0 B" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/reviewDeleteButton"
+            style="@style/Widget.Danger"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:enabled="false"
+            android:paddingHorizontal="24dp"
+            app:icon="@drawable/ic_trash"
+            app:iconTint="@color/white"
+            android:text="@string/review_and_delete" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

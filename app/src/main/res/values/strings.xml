@@ -1,0 +1,243 @@
+<resources>
+    <string name="app_name">Duplicate Finder</string>
+
+    <!-- Notifications -->
+    <string name="channel_scan">Scan progress</string>
+    <string name="channel_delete">Cleanup progress</string>
+    <string name="channel_results">Scan results</string>
+    <string name="notif_scanning">Scanning for duplicates — %1$d%%</string>
+    <string name="notif_scan_text">%1$s files scanned • %2$s duplicates found</string>
+    <string name="notif_scan_done_title">Scan complete — %1$s of duplicates found</string>
+    <string name="notif_scan_done_text">%1$s files in %2$s groups. Tap to review and free up space.</string>
+    <string name="notif_scan_done_empty">No duplicates found. Your storage is clean!</string>
+    <string name="notif_scan_done_clean">Scan complete — no duplicates found</string>
+    <string name="notif_deleting">Deleting duplicates — %1$d%%</string>
+    <string name="notif_delete_text">%1$s of %2$s files • %3$s freed</string>
+    <string name="notif_delete_done_title">Clean-up complete — %1$s freed</string>
+    <string name="notif_delete_done_binned">%1$s files moved to Recycle Bin (recoverable for 30 days)</string>
+    <string name="notif_delete_done_archived">%1$s files archived to a zip</string>
+    <string name="notif_auto_clean_title">%1$s duplicates found in a scheduled scan</string>
+    <string name="notif_auto_clean_text">%1$s duplicate files (%2$s) are ready to review and clean up.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_tagline">Find and remove duplicate files to free up valuable storage.</string>
+    <string name="get_started">Get Started</string>
+    <string name="onboarding_permission_note">The app will ask for permissions like storage and file access to read the files and find duplicates.</string>
+    <string name="trust_row">Secure. Fast. Reliable.</string>
+    <string name="lang_english">English</string>
+
+    <!-- Home -->
+    <string name="home_title">Duplicate Finder</string>
+    <string name="storage_overview">Storage Overview</string>
+    <string name="internal_storage">Internal Storage</string>
+    <string name="storage_of">%1$s / %2$s</string>
+    <string name="storage_left">%1$s storage left (%2$s)</string>
+    <string name="select_scan_type">Select Scan Type</string>
+    <string name="choose_files">Choose Files</string>
+    <string name="view_all">View All</string>
+    <string name="start_scan">Start Smart Scan</string>
+    <string name="quota_caption">Free daily limit: %1$s of %2$s files left today</string>
+    <string name="quota_unlimited">Premium — unlimited scans</string>
+    <string name="quota_sheet_title">Daily scan limit reached</string>
+    <string name="quota_sheet_body">This scan needs about %1$s files but you have %2$s left in your free daily limit today.</string>
+    <string name="quota_watch_ad">Watch a short ad to scan 500 more files</string>
+    <string name="quota_scan_within">Scan within my free limit (%1$s files)</string>
+    <string name="quota_upgrade">Upgrade to Premium — unlimited</string>
+    <string name="ad_dialog_title">Rewarded ad</string>
+    <string name="ad_dialog_body">Watch a short ad to add 500 files to today\'s scan limit.</string>
+    <string name="ad_claim">Watch &amp; claim +500</string>
+    <string name="ad_not_ready">Ad not ready yet — please try again in a moment.</string>
+
+    <!-- Scan modes -->
+    <string name="mode_exact_short">Exact Byte by Byte Scan</string>
+    <string name="mode_similar_short">Similar Scan</string>
+    <string name="mode_very_similar_short">Very Similar Scan</string>
+    <string name="mode_deep_short">Deep Scan</string>
+    <string name="mode_exact_desc">Finds duplicate files that are 100% identical, even if they have different names or are in different locations.</string>
+    <string name="mode_similar_desc">Finds the same content with small edits or recompression.</string>
+    <string name="mode_very_similar_desc">Finds edited versions — cropped, resized, or re-encoded.</string>
+    <string name="mode_deep_desc">Finds matching content even after major changes. Slowest, most thorough.</string>
+    <string name="scan_title_exact">Byte by Byte Scan</string>
+    <string name="mode_tag_exact">Exact</string>
+    <string name="mode_tag_similar">Similar</string>
+    <string name="mode_tag_very_similar">Very Similar</string>
+    <string name="mode_tag_deep">Deep</string>
+
+    <!-- Categories -->
+    <string name="cat_all">All Files</string>
+    <string name="cat_images">Images</string>
+    <string name="cat_videos">Videos</string>
+    <string name="cat_documents">Documents</string>
+    <string name="cat_audio">Audio</string>
+    <string name="cat_other">Other</string>
+    <string name="cat_others">Others</string>
+
+    <!-- Permission -->
+    <string name="permission_title">Allow file access</string>
+    <string name="permission_body">Duplicate Finder scans your files on your device to find duplicates. Nothing ever leaves your phone.</string>
+    <string name="grant_access">Grant access</string>
+    <string name="all_files_title">Enable full file access</string>
+    <string name="all_files_body">To find and remove duplicates in every folder — not just photos and videos — allow \"All files access\". Nothing ever leaves your phone.</string>
+    <string name="all_files_open">Open settings</string>
+    <string name="all_files_later">Later</string>
+
+    <!-- Scan overlay -->
+    <string name="scanning">Scanning</string>
+    <string name="scan_scope_device">Scanning entire device</string>
+    <plurals name="scan_scope_folders">
+        <item quantity="one">Scanning %1$d selected folder</item>
+        <item quantity="other">Scanning %1$d selected folders</item>
+    </plurals>
+    <string name="files_scanned">Files Scanned</string>
+    <string name="duplicates_found">Duplicates Found</string>
+    <string name="time_elapsed">Time Elapsed</string>
+    <string name="stop_scan">Stop Scan</string>
+    <string name="stop_confirm_title">Stop scanning?</string>
+    <string name="stop_confirm_msg">Progress will be lost.</string>
+    <string name="stop_confirm_yes">Stop</string>
+    <string name="cancel">Cancel</string>
+    <string name="scan_failed">Scan could not finish. Please try again.</string>
+
+    <!-- Results -->
+    <string name="scan_results">Scan Results</string>
+    <string name="files_count">%1$s Files</string>
+    <string name="review_duplicates">Review Duplicates</string>
+    <string name="smart_cleanup">Smart Cleanup</string>
+    <string name="results_warning_title">Review and select the files to delete.</string>
+    <string name="results_warning_sub">Deleted files can be recovered from the bin till 30 days.</string>
+    <string name="empty_results_title">Run your first scan to see results here</string>
+    <string name="go_home">Go Home</string>
+    <string name="zero_dupes_title">No duplicates — your storage is clean!</string>
+
+    <!-- Cleanup -->
+    <string name="duplicate_files">Duplicate Files</string>
+    <string name="total_duplicates">Total Duplicates</string>
+    <string name="files_label">Files</string>
+    <string name="duplicate_size">Duplicate Size</string>
+    <string name="of_total_space">%1$s of total space</string>
+    <string name="duplicate_groups">Duplicate Groups</string>
+    <string name="groups_label">Groups</string>
+    <string name="marked_for_deletion">Marked for Deletion</string>
+    <string name="n_files_selected_stat">%1$s Files Selected</string>
+    <string name="sort_by">Sort by:</string>
+    <string name="sort_size">Size</string>
+    <string name="sort_name">Name (A-Z)</string>
+    <string name="sort_duplicates">Duplicates</string>
+    <string name="group_header">%1$s Files • %2$s • %3$s Duplicates</string>
+    <string name="n_duplicates">%1$s Duplicates</string>
+    <string name="preview">Preview</string>
+    <string name="select_all">Select All</string>
+    <string name="review_and_delete">Review &amp; Delete</string>
+    <string name="n_files_selected">%1$s files selected</string>
+    <string name="keep_one_hint">Keep at least one copy</string>
+    <string name="match_pill">%1$d%% match</string>
+    <string name="best_copy">Best copy</string>
+    <string name="plus_more">+%1$d</string>
+    <string name="preview_title">Select files to remove</string>
+    <string name="preview_subtitle">Tap a copy to mark it for deletion. The best copy is kept by default.</string>
+    <string name="preview_done">Done</string>
+    <string name="n_marked">%1$s marked • %2$s</string>
+    <string name="search_hint">Search by file name</string>
+    <string name="search_no_results">No files match your search</string>
+    <string name="open_file">Open</string>
+
+    <!-- Review &amp; delete -->
+    <string name="review_delete_title">Review &amp; Delete</string>
+    <string name="will_be_deleted">Will be deleted</string>
+    <string name="will_be_kept">Will be kept</string>
+    <string name="total_size">Total Size</string>
+    <string name="files_word">Files</string>
+    <string name="bin_recover_note">Files can be recovered from the bin till next 30 days.</string>
+    <string name="archive_note">Files will be archived into a zip in your chosen folder.</string>
+    <string name="proceed_to_delete">Proceed to Delete</string>
+    <string name="proceed_to_archive">Proceed to Archive</string>
+    <string name="review_again">Review Again</string>
+
+    <!-- Delete overlay -->
+    <string name="deleting_files">Deleting Files</string>
+    <string name="deleting">Deleting files</string>
+    <string name="files_deleted">Files Deleted</string>
+    <string name="space_freed">Space Freed</string>
+    <string name="delete_warning">Do not close the app while deletion is in progress — you can minimize it.</string>
+    <string name="cleanup_completed">Clean-up Completed</string>
+    <string name="back_to_home">Back to Home</string>
+    <string name="share">Share</string>
+    <string name="share_text">I just freed %1$s of storage with Duplicate Finder!</string>
+    <string name="skipped_summary">%1$s deleted, %2$s skipped</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="group_smart">Smart Scan &amp; Cleanup</string>
+    <string name="group_general">General</string>
+    <string name="set_scan_folder">Scan Any Particular Folder</string>
+    <string name="set_exclude">Exclude Folders</string>
+    <string name="set_recycle_bin">Recycle Bin</string>
+    <string name="set_schedule">Schedule Scan</string>
+    <string name="set_auto_cleanup">Auto Cleanup / Smart Clean</string>
+    <string name="set_archive">Archive Files Instead of Deleting</string>
+    <string name="folder_scanning">Scanning: %1$s</string>
+    <string name="folder_whole_device">Scanning the whole device</string>
+    <string name="folder_excluded_count">%1$d folder(s) excluded</string>
+    <string name="folder_change">Change folder</string>
+    <string name="folder_add">Add folder</string>
+    <string name="folder_clear">Clear</string>
+    <string name="folder_picker_missing">No folder picker available on this device.</string>
+    <string name="folder_unsupported">Couldn\'t resolve that folder. Try a folder on internal storage.</string>
+    <string name="archive_dest">Zip saved to: %1$s</string>
+    <string name="archive_dest_default">selected folder</string>
+    <string name="schedule_off">Off</string>
+    <string name="schedule_daily">Daily</string>
+    <string name="schedule_weekly">Weekly</string>
+    <string name="schedule_monthly">Monthly</string>
+    <string name="language">Language</string>
+    <string name="choose_language">Choose language</string>
+    <string name="rate_us">Rate Us</string>
+    <string name="about_us">About Us</string>
+    <string name="more_apps">More Apps</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms">Terms of Use</string>
+    <string name="pro_badge">PRO</string>
+
+    <!-- Recycle bin -->
+    <string name="recycle_bin_title">Recycle Bin</string>
+    <string name="restore">Restore</string>
+    <string name="delete_forever">Delete Forever</string>
+    <string name="empty_bin">Empty Bin</string>
+    <string name="days_left">%1$s days left</string>
+    <string name="bin_empty">Recycle bin is empty</string>
+    <string name="select_none">Select None</string>
+    <string name="n_selected">%1$d selected</string>
+    <string name="delete_selected_msg">Permanently delete %1$d file(s)? This cannot be undone.</string>
+
+    <!-- Premium -->
+    <string name="premium_title">Go Premium</string>
+    <string name="premium_subtitle">Unlock the full power of Duplicate Finder</string>
+    <string name="activate_premium_test">Activate premium (test)</string>
+    <string name="deactivate_premium_test">Deactivate premium (test)</string>
+    <string name="premium_active">Premium is active</string>
+    <string name="premium_feature_smart">Smart Cleanup — auto-select the best copies</string>
+    <string name="premium_feature_unlimited">Unlimited daily scans, no limits</string>
+    <string name="premium_feature_noads">No ads, ever</string>
+    <string name="premium_feature_schedule">Scheduled scans &amp; specific folders</string>
+    <string name="premium_feature_archive">Archive instead of delete</string>
+
+    <!-- Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_results">Results</string>
+    <string name="nav_cleanup">Cleanup</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Common -->
+    <string name="about_title">About Duplicate Finder</string>
+    <string name="about_body">Duplicate Finder scans your device on-device to find and safely remove duplicate files. Nothing ever leaves your phone.</string>
+    <string name="pro_feature_toast">This is a Premium feature.</string>
+    <string name="cd_crown">Premium</string>
+    <string name="cd_info">About</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_sort_direction">Toggle sort direction</string>
+    <string name="set_theme">App theme</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+</resources>

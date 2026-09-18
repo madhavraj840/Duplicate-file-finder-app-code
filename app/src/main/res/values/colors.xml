@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Brand / semantic tokens (DESIGN §1.1) -->
+    <color name="primary">#5B5BF0</color>
+    <color name="primary_dark">#4A4ADB</color>
+    <color name="primary_container">#EEEEFC</color>
+    <color name="onboarding_bg">#0E1230</color>
+    <color name="onboarding_accent">#8A8CF7</color>
+
+    <color name="surface">#F7F7FA</color>
+    <color name="card_surface">#FFFFFF</color>
+    <color name="card_stroke">#ECECF1</color>
+
+    <color name="text_primary">#111318</color>
+    <color name="text_secondary">#6F7580</color>
+    <color name="text_tertiary">#A0A5AE</color>
+
+    <color name="success">#22A356</color>
+    <color name="success_container">#E7F6EC</color>
+    <color name="warning">#F2A93B</color>
+    <color name="warning_container">#FDF1DF</color>
+    <color name="danger">#E5484D</color>
+    <color name="danger_container">#FBE9EA</color>
+    <color name="premium_gold">#F5B301</color>
+    <color name="premium_gold_container">#FDF3D6</color>
+
+    <color name="track">#E7E7EE</color>
+
+    <!-- Category colors (donut chart + type icons), consistent app-wide -->
+    <color name="cat_images">#5B5BF0</color>
+    <color name="cat_videos">#E5484D</color>
+    <color name="cat_documents">#F2953B</color>
+    <color name="cat_audio">#22A356</color>
+    <color name="cat_others">#F5C542</color>
+
+    <color name="icon_bg_images">#E6F4EA</color>
+    <color name="icon_green">#34A853</color>
+    <color name="icon_purple">#7B4DFF</color>
+    <color name="icon_blue">#2F6BFF</color>
+    <color name="icon_gray">#9AA0AA</color>
+</resources>

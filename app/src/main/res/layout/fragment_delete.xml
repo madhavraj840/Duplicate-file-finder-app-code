@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface">
+
+    <!-- Progress state -->
+    <LinearLayout
+        android:id="@+id/progressContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/deleteTitle"
+            style="@style/Text.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/deleting_files" />
+
+        <com.bunkwise.duplicatefilefinder.core.designsystem.CircularProgressView
+            android:id="@+id/deleteRing"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="40dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/deleting" android:textColor="@color/danger" android:textSize="20sp" android:textStyle="bold" />
+            <com.bunkwise.duplicatefilefinder.core.designsystem.BouncingDotsView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/currentName"
+            style="@style/Text.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:ellipsize="middle"
+            android:gravity="center"
+            android:maxLines="1"
+            tools:text="IMG_20240520_123456.jpg" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_card"
+            android:orientation="horizontal"
+            android:paddingVertical="16dp">
+
+            <LinearLayout style="@style/StatColumn">
+                <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/files_deleted" />
+                <TextView android:id="@+id/filesDeleted" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" tools:text="142" />
+            </LinearLayout>
+
+            <View style="@style/StatDivider" />
+
+            <LinearLayout style="@style/StatColumn">
+                <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/space_freed" />
+                <TextView android:id="@+id/spaceFreed" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" tools:text="812 MB" />
+            </LinearLayout>
+
+            <View style="@style/StatDivider" />
+
+            <LinearLayout style="@style/StatColumn">
+                <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/time_elapsed" />
+                <TextView android:id="@+id/deleteElapsed" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" tools:text="00:12" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_rounded_16"
+            android:backgroundTint="@color/warning_container"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_warning" android:contentDescription="@null" />
+            <TextView style="@style/Text.Secondary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:text="@string/delete_warning" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Completion state -->
+    <LinearLayout
+        android:id="@+id/completeContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+
+        <ImageView
+            android:id="@+id/completeIcon"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:src="@drawable/ic_check_circle"
+            android:contentDescription="@null" />
+
+        <TextView
+            style="@style/Text.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/cleanup_completed" />
+
+        <TextView
+            android:id="@+id/freedTotal"
+            style="@style/Text.Display"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/success"
+            android:textSize="40sp"
+            tools:text="1.78 GB" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_card"
+            android:orientation="horizontal"
+            android:paddingVertical="16dp">
+
+            <LinearLayout style="@style/StatColumn">
+                <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/files_deleted" />
+                <TextView android:id="@+id/completeFiles" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" tools:text="320" />
+            </LinearLayout>
+
+            <View style="@style/StatDivider" />
+
+            <LinearLayout style="@style/StatColumn">
+                <TextView style="@style/Text.Secondary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/time_elapsed" />
+                <TextView android:id="@+id/completeElapsed" style="@style/Text.Title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" tools:text="00:18" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/skippedSummary"
+            style="@style/Text.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            tools:text="142 deleted, 3 skipped" />
+
+        <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/backHomeButton"
+            style="@style/Widget.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/back_to_home" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/shareButton"
+            style="@style/Widget.Ghost"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:text="@string/share" />
+    </LinearLayout>
+
+    <!-- Celebration overlay: hidden until the completion state fires it. -->
+    <com.bunkwise.duplicatefilefinder.core.designsystem.ConfettiView
+        android:id="@+id/confetti"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+</FrameLayout>
