@@ -1,7 +1,16 @@
 package com.bunkwise.duplicatefilefinder.presentation.home
 
 import android.text.format.DateUtils
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextOverflow
+import com.bunkwise.duplicatefilefinder.Performance
+import com.bunkwise.duplicatefilefinder.core.domain.model.ScanPhase
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -150,6 +159,10 @@ private fun ScanOrb(state: HomeViewModel.HomeState, onScan: () -> Unit, onOpenRu
     }
     val sweep by animateFloatAsState(target, tween(900), label = "orb")
     val full = (state.storage?.usedPercent ?: 0) >= 90 && running == null
+    val motion = running != null && !Performance.lite
+    val spin = rememberInfiniteTransition(label = "scanning")
+    val angle by spin.animateFloat(0f, 360f, infiniteRepeatable(tween(1400, easing = LinearEasing)), label = "spin")
+    val breath by spin.animateFloat(1f, 0.94f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "breath")
     Box(modifier.size(224.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val w = 12.dp.toPx()
@@ -160,11 +173,20 @@ private fun ScanOrb(state: HomeViewModel.HomeState, onScan: () -> Unit, onOpenRu
                 if (full) n.offer else n.ac, -90f, 360f * sweep, false, Offset(inset, inset), arcSize,
                 style = Stroke(w, cap = StrokeCap.Round),
             )
+            if (motion) {
+                // A short comet chasing round the ring: something is happening even when the
+                // percent sits still (listing files has no percent at all).
+                drawArc(
+                    n.acTx.copy(alpha = 0.85f), angle - 90f, 46f, false, Offset(inset, inset), arcSize,
+                    style = Stroke(w * 0.5f, cap = StrokeCap.Round),
+                )
+            }
         }
         val enabled = running != null || canScan
         Column(
             Modifier
                 .size(166.dp)
+                .graphicsLayer { if (motion) { scaleX = breath; scaleY = breath } }
                 .clip(CircleShape)
                 .background(if (enabled) n.ac else n.s2)
                 .clickable(enabled = enabled, onClick = if (running != null) onOpenRunning else onScan)
@@ -194,6 +216,36 @@ private fun ScanOrb(state: HomeViewModel.HomeState, onScan: () -> Unit, onOpenRu
 private fun OrbCaption(state: HomeViewModel.HomeState) {
     val n = Df.c
     val q = state.quota
+    val running = state.running
+    if (state.runningPercent != null) {
+        Column(
+            Modifier.fillMaxWidth().padding(top = Spacing.md, start = Spacing.gutter, end = Spacing.gutter),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            val phase = when (running?.phase) {
+                ScanPhase.HASHING -> R.string.phase_hashing
+                ScanPhase.COMPARING -> R.string.phase_comparing
+                ScanPhase.GROUPING, ScanPhase.DONE -> R.string.phase_grouping
+                else -> R.string.phase_listing
+            }
+            val count = running?.filesScanned ?: 0
+            Text(
+                if (count > 0) stringResource(R.string.home_scan_phase_count, stringResource(phase), Formatters.count(count))
+                else stringResource(phase),
+                style = MaterialTheme.typography.titleSmall,
+                color = n.tx,
+            )
+            Text(
+                running?.currentPath?.substringAfterLast('/')?.takeIf { it.isNotBlank() } ?: "…",
+                style = MaterialTheme.typography.bodySmall,
+                color = n.mu,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = Spacing.xxs),
+            )
+        }
+        return
+    }
     Column(Modifier.fillMaxWidth().padding(top = Spacing.md), horizontalAlignment = Alignment.CenterHorizontally) {
         state.storage?.let { s ->
             Text(

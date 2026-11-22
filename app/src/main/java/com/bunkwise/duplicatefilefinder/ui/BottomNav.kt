@@ -72,7 +72,9 @@ val BottomNavClearance = 96.dp
 fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier, glass: Glass? = null) {
     val n = Df.c
     val capsule = RoundedCornerShape(34.dp)
-    Column(modifier = modifier.fillMaxWidth()) {
+    Box(modifier = modifier.fillMaxWidth()) {
+    Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.3f to Color.Transparent, 0.7f to n.bg)))
+    Column(modifier = Modifier.fillMaxWidth()) {
         BoxWithConstraints(
             modifier = Modifier
                 .padding(horizontal = Spacing.gutter)
@@ -81,7 +83,7 @@ fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modif
                 .shadow(12.dp, capsule, ambientColor = n.shade, spotColor = n.shade)
                 .clip(capsule)
                 .then(
-                    if (glass != null && !Performance.lite) Modifier.glassEffect(glass, n.bg, 28.dp, fallback = n.navBg, tint = n.navBg.copy(alpha = 0.55f))
+                    if (glass != null && !Performance.lite) Modifier.glassEffect(glass, n.bg, 28.dp, fallback = n.bg.copy(alpha = 0.94f))
                     else Modifier.background(n.navBg),
                 )
                 // Light catching the top edge, fading out down the sides.
@@ -110,6 +112,7 @@ fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modif
             )
         }
         Spacer(Modifier.height(Spacing.md))
+    }
     }
 }
 

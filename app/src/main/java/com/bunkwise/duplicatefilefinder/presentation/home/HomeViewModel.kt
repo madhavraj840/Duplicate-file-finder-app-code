@@ -8,6 +8,7 @@ import com.bunkwise.duplicatefilefinder.core.domain.model.BinEntry
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
 import com.bunkwise.duplicatefilefinder.core.domain.model.QuotaInfo
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanMode
+import com.bunkwise.duplicatefilefinder.core.domain.model.ScanProgress
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanResult
 import com.bunkwise.duplicatefilefinder.core.domain.model.StorageInfo
 import com.bunkwise.duplicatefilefinder.core.domain.repository.FileEnumerator
@@ -52,7 +53,9 @@ class HomeViewModel(
         val lastResult: ScanResult? = null,
         val bin: List<BinEntry> = emptyList(),
         /** Percent of a scan running in the background, or null when idle. */
-        val runningPercent: Int? = null
+        val runningPercent: Int? = null,
+        /** What the running scan is on right now (phase, file, count); null when idle. */
+        val running: ScanProgress? = null,
     )
 
     sealed interface HomeEvent {
@@ -83,7 +86,7 @@ class HomeViewModel(
         viewModelScope.launch { bin.observe().collect { b -> _state.update { it.copy(bin = b) } } }
         viewModelScope.launch {
             scanController.progress.collect { p ->
-                if (scanController.isRunning) _state.update { it.copy(runningPercent = p.percent) }
+                if (scanController.isRunning) _state.update { it.copy(runningPercent = p.percent, running = p) }
             }
         }
         viewModelScope.launch {
@@ -93,10 +96,10 @@ class HomeViewModel(
                     is ScanStatus.Failed -> {
                         // Don't reset() here: if the Scan screen is open it must still see
                         // Failed, or it spins forever. It consumes the status itself.
-                        _state.update { it.copy(runningPercent = null) }
+                        _state.update { it.copy(runningPercent = null, running = null) }
                         _events.send(HomeEvent.ScanFailed)
                     }
-                    else -> _state.update { it.copy(runningPercent = null) }
+                    else -> _state.update { it.copy(runningPercent = null, running = null) }
                 }
             }
         }
