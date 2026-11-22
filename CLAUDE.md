@@ -23,7 +23,7 @@ Run tests (only default scaffolding exists today — no real unit/instrumented t
 
 ## Architecture
 
-Package root: `com.bunkwise.duplicatefilefinder`. XML layouts + ViewBinding + Navigation Component (Fragments) — **not** Jetpack Compose. Clean Architecture + MVVM, with fully manual dependency injection (no Hilt/Dagger/Koin, no Room/SQL).
+Package root: `com.bunkwise.duplicatefilefinder`. Navigation Component with Fragments, each rendering a Jetpack Compose screen (`ui/FragmentCompose.kt` `composeScreen { }` → stateless `XxxScreen` composable in the same package; the Fragment keeps permissions, dialogs and navigation). Design system in `ui/` (`Theme.kt` DfTheme/Df.c palette, `Components.kt`, `Glass.kt`, `BottomNav.kt`, `ProBadge.kt` Lottie, `Thumb.kt` Coil). `Performance.lite` disables animation-heavy effects on low-end devices. Old XML layouts/adapters remain in the tree but are unused. Clean Architecture + MVVM, with fully manual dependency injection (no Hilt/Dagger/Koin, no Room/SQL).
 
 **Composition root**: `di/AppContainer.kt` builds every repository/engine/controller as a lazy singleton; `di/AppViewModelFactory.kt` is a manual `ViewModelProvider.Factory` mapping each ViewModel to constructor args from `AppContainer`. `App.kt` owns the single `AppContainer` instance and is reachable via `context.appContainer`.
 

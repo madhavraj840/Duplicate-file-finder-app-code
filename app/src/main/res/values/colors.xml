@@ -6,17 +6,17 @@
     <color name="white">#FFFFFFFF</color>
 
     <!-- Accent: interactive elements and the selected state only. -->
-    <color name="primary">#0B6B61</color>
+    <color name="primary">#2A85FF</color>
     <color name="on_primary">#FFFFFF</color>
 
-    <color name="background">#FFFFFF</color>
+    <color name="background">#F6F7F9</color>
     <!-- Subtle fill for bars (bottom action bar, thumbnails placeholder). -->
-    <color name="surface_variant">#F3F4F5</color>
-    <color name="divider">#E2E4E7</color>
+    <color name="surface_variant">#E8EBF0</color>
+    <color name="divider">#D6DBE3</color>
 
-    <color name="text_primary">#1B1D1F</color>
-    <color name="text_secondary">#5C6166</color>
+    <color name="text_primary">#1A1E24</color>
+    <color name="text_secondary">#626B75</color>
 
-    <color name="danger">#B3261E</color>
-    <color name="warning">#9A5B00</color>
+    <color name="danger">#E0383E</color>
+    <color name="warning">#C98A2E</color>
 </resources>

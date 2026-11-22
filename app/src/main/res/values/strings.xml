@@ -291,4 +291,39 @@
     <string name="premium_unavailable">Purchases aren\'t available in this version yet.</string>
     <string name="premium_debug_on">Turn on (debug build)</string>
     <string name="premium_debug_off">Turn off (debug build)</string>
+    <!-- Compose design system -->
+    <string name="pro_tag">PRO</string>
+    <string name="status_granted">Allowed</string>
+    <string name="action_turn_on">Turn on</string>
+    <string name="action_fix">Allow</string>
+    <!-- Rewarded-ad unlocks -->
+    <string name="unlock_title">Unlock %1$s</string>
+    <string name="unlock_body">Get Premium to keep it for good, or watch a short ad to use it free for 12 hours.</string>
+    <string name="unlock_get_pro">Get Premium</string>
+    <string name="unlock_watch_ad">Watch an ad</string>
+    <string name="unlock_progress">%1$d of %2$d ads toward all of Premium</string>
+    <string name="unlock_done_feature">%1$s unlocked for 12 hours. %2$d of %3$d ads toward all of Premium.</string>
+    <string name="unlock_done_pass">All of Premium is unlocked for 12 hours, with no daily limit.</string>
+    <string name="unlock_ad_loading">Loading the ad, it starts in a few seconds…</string>
+    <string name="unlock_no_ad">No ad is ready right now. Check your connection and try again in a minute.</string>
+    <string name="unlock_free_title">Premium free for 12 hours</string>
+    <string name="unlock_free_body">Watch %1$d short ads and every Premium feature unlocks for 12 hours.</string>
+    <string name="unlock_pass_active">All of Premium is unlocked by ads right now.</string>
+    <string name="settings_pro_title">Get Premium</string>
+    <string name="settings_pro_pitch">No daily limit, select all, folders, scheduled scans and archiving.</string>
+    <string name="settings_pro_active">Premium is active</string>
+    <string name="settings_pro_thanks">Thanks for supporting the app.</string>
+    <string name="chip_watch_ad">Watch ad</string>
+    <string name="unlock_progress_toast">%1$d of %2$d ads watched. All of Premium unlocks at %2$d.</string>
+    <string name="premium_headline">Clean up without limits</string>
+    <string name="premium_f_folders_desc">Point a scan at one folder, or keep folders out of every scan.</string>
+    <string name="premium_f_schedule_desc">The app scans on its own and tells you what it found. It never deletes by itself.</string>
+    <string name="premium_f_archive_desc">Removed files go into a dated zip in a folder you choose, instead of the bin.</string>
+    <string name="home_storage_used">%1$s of %2$s used</string>
+    <string name="home_can_free">can be freed · %1$s groups</string>
+    <string name="home_review">Review</string>
+    <string name="home_scanning">Scanning</string>
+    <string name="home_last_scan_ago">Last scan · %1$s</string>
+    <string name="legend_item">%1$s %2$s</string>
+    <string name="keep_tag">Keep</string>
 </resources>

@@ -1,5 +1,7 @@
 package com.bunkwise.duplicatefilefinder.service
 
+import com.bunkwise.duplicatefilefinder.ads.ProFeature
+import com.bunkwise.duplicatefilefinder.ads.Unlocks
 import android.content.Context
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -22,7 +24,7 @@ class AutoScanScheduler(private val context: Context) {
 
     fun sync(settings: AppSettings) {
         val hours = settings.scanSchedule.intervalHours
-        val enabled = settings.isPremium && hours != null
+        val enabled = Unlocks.unlocked(settings.isPremium, ProFeature.SCHEDULE) && hours != null
 
         if (!enabled) {
             if (scheduledHours == CANCELLED) return

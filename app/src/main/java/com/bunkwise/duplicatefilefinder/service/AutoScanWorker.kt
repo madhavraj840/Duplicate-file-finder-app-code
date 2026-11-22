@@ -1,5 +1,7 @@
 package com.bunkwise.duplicatefilefinder.service
 
+import com.bunkwise.duplicatefilefinder.ads.ProFeature
+import com.bunkwise.duplicatefilefinder.ads.Unlocks
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -24,7 +26,7 @@ class AutoScanWorker(
         val container = applicationContext.appContainer
         val settings = container.settingsRepository.current()
 
-        if (!settings.isPremium) return Result.success()
+        if (!Unlocks.unlocked(settings.isPremium, ProFeature.SCHEDULE)) return Result.success()
         // Same check as the app itself: media access is enough to scan.
         if (!Permissions.hasStorageAccess(applicationContext)) return Result.success()
         // Never compete with the user: a manual scan or a cleanup in progress owns the
