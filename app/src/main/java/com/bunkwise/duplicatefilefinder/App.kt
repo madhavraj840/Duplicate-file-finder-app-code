@@ -1,11 +1,8 @@
 package com.bunkwise.duplicatefilefinder
 
 import android.app.Application
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import com.bunkwise.duplicatefilefinder.di.AppContainer
 import com.bunkwise.duplicatefilefinder.presentation.common.ThemePrefs
-import com.google.android.gms.ads.MobileAds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,19 +22,14 @@ class App : Application() {
         container = AppContainer(this)
         container.notifications.ensureChannels()
 
-        // Initialize the Ads SDK once, then warm the first rewarded ad so the file-limit
-        // boost is ready by the time a user hits the quota sheet. initialize() is async
-        // and does its own IO; we only preload after it reports ready.
-        MobileAds.initialize(this) { container.rewardedAds.preload() }
+        // The ads SDK is deliberately NOT initialised here: RewardedAdManager does it
+        // lazily (after consent) the first time the quota sheet needs an ad.
 
-        // Apply the saved per-app language (ARCHITECTURE §8 / OTHER §4).
+        // The per-app language is NOT re-applied here: AppCompat (autoStoreLocales, API
+        // <33) and the system (33+) already persist what AppLanguages.apply() set.
+        // Re-applying from a background thread could recreate an Activity off the main
+        // thread and crash, and a default tag forced English over the phone's language.
         appScope.launch {
-            val settings = container.settingsRepository.current()
-            if (settings.languageTag.isNotBlank()) {
-                AppCompatDelegate.setApplicationLocales(
-                    LocaleListCompat.forLanguageTags(settings.languageTag)
-                )
-            }
             // Lazy recycle-bin purge on launch (replaces the WorkManager job in v1).
             container.recycleBin.purgeExpired()
         }

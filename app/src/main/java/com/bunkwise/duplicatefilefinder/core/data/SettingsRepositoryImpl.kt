@@ -15,11 +15,9 @@ class SettingsRepositoryImpl(
 
     override val settings: Flow<AppSettings> = context.appDataStore.data.map { p ->
         AppSettings(
-            onboardingDone = p[PrefKeys.ONBOARDING_DONE] ?: false,
             isPremium = p[PrefKeys.IS_PREMIUM] ?: false,
             archiveMode = p[PrefKeys.ARCHIVE_MODE] ?: false,
-            autoCleanup = p[PrefKeys.AUTO_CLEANUP] ?: false,
-            languageTag = p[PrefKeys.LANGUAGE] ?: "en",
+            languageTag = p[PrefKeys.LANGUAGE] ?: "", // blank = follow the phone's language
             scanFolders = p[PrefKeys.SCAN_FOLDERS] ?: emptySet(),
             excludeFolders = p[PrefKeys.EXCLUDE_FOLDERS] ?: emptySet(),
             scanSchedule = p[PrefKeys.SCAN_SCHEDULE]
@@ -31,20 +29,12 @@ class SettingsRepositoryImpl(
 
     override suspend fun current(): AppSettings = settings.first()
 
-    override suspend fun setOnboardingDone(done: Boolean) {
-        context.appDataStore.edit { it[PrefKeys.ONBOARDING_DONE] = done }
-    }
-
     override suspend fun setPremium(premium: Boolean) {
         context.appDataStore.edit { it[PrefKeys.IS_PREMIUM] = premium }
     }
 
     override suspend fun setArchiveMode(enabled: Boolean) {
         context.appDataStore.edit { it[PrefKeys.ARCHIVE_MODE] = enabled }
-    }
-
-    override suspend fun setAutoCleanup(enabled: Boolean) {
-        context.appDataStore.edit { it[PrefKeys.AUTO_CLEANUP] = enabled }
     }
 
     override suspend fun setLanguage(tag: String) {

@@ -74,7 +74,7 @@ class NotificationOrchestrator(private val context: Context) {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(contentIntent())
-            .addAction(0, context.getString(R.string.stop_scan), stop)
+            .addAction(0, context.getString(R.string.stop), stop)
             .build()
     }
 
@@ -97,29 +97,14 @@ class NotificationOrchestrator(private val context: Context) {
         safeNotify(ID_SCAN_RESULT, resultBuilder(title, text, nav).build())
     }
 
-    /**
-     * Result of a background scheduled scan. Silent when nothing was found. When
-     * [cleanupPrompt] (Auto Cleanup on) the copy nudges the user toward cleanup;
-     * otherwise it is a passive summary. Never deletes — tapping opens the app.
-     */
-    fun notifyAutoScanComplete(result: ScanResult, cleanupPrompt: Boolean) {
+    /** Result of a background scheduled scan. Silent when nothing was found; never deletes. */
+    fun notifyAutoScanComplete(result: ScanResult) {
         if (result.groupCount == 0) return
-        val title = if (cleanupPrompt) {
-            context.getString(R.string.notif_auto_clean_title, Formatters.count(result.totalDuplicateFiles))
-        } else {
-            context.getString(R.string.notif_scan_done_title, Formatters.bytes(result.wastedBytes))
-        }
-        val text = if (cleanupPrompt) {
-            context.getString(
-                R.string.notif_auto_clean_text,
-                Formatters.count(result.totalDuplicateFiles), Formatters.bytes(result.wastedBytes)
-            )
-        } else {
-            context.getString(
-                R.string.notif_scan_done_text,
-                Formatters.count(result.totalDuplicateFiles), Formatters.count(result.groupCount)
-            )
-        }
+        val title = context.getString(R.string.notif_scan_done_title, Formatters.bytes(result.wastedBytes))
+        val text = context.getString(
+            R.string.notif_scan_done_text,
+            Formatters.count(result.totalDuplicateFiles), Formatters.count(result.groupCount)
+        )
         safeNotify(ID_SCAN_RESULT, resultBuilder(title, text, NAV_RESULTS).build())
     }
 
@@ -133,7 +118,7 @@ class NotificationOrchestrator(private val context: Context) {
             .setContentText(
                 context.getString(
                     R.string.notif_delete_text,
-                    Formatters.count(p.deleted), Formatters.count(p.total), Formatters.bytes(p.freedBytes)
+                    Formatters.count(p.deleted), Formatters.count(p.total)
                 )
             )
             .setProgress(100, percent, false)
@@ -144,12 +129,9 @@ class NotificationOrchestrator(private val context: Context) {
     }
 
     fun notifyDeleteComplete(outcome: DeletionOutcome, archived: Boolean) {
-        val title = context.getString(R.string.notif_delete_done_title, Formatters.bytes(outcome.freedBytes))
-        val text = if (archived) {
-            context.getString(R.string.notif_delete_done_archived, Formatters.count(outcome.deleted))
-        } else {
-            context.getString(R.string.notif_delete_done_binned, Formatters.count(outcome.deleted))
-        }
+        val count = Formatters.count(outcome.deleted)
+        val title = context.getString(if (archived) R.string.notif_delete_done_archive else R.string.notif_delete_done_bin, count)
+        val text = context.getString(if (archived) R.string.notif_delete_done_archive_text else R.string.notif_delete_done_bin_text)
         safeNotify(ID_DELETE_RESULT, resultBuilder(title, text).build())
     }
 

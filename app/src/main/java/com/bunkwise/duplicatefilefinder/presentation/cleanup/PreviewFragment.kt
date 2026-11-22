@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -20,13 +19,15 @@ import com.bunkwise.duplicatefilefinder.core.domain.model.FileItem
 import com.bunkwise.duplicatefilefinder.databinding.FragmentPreviewBinding
 import com.bunkwise.duplicatefilefinder.presentation.common.FileOpener
 import com.bunkwise.duplicatefilefinder.presentation.shared.SharedSelectionViewModel
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 /**
- * Full-screen overlay to pick exactly which copies in a group to remove
- * (DESIGN §3.5 Preview). Selection is applied live to the shared selection store,
- * so returning to Cleanup already reflects the choices. The keeper shows a "Best
- * copy" badge and the last surviving copy can't be marked (keep-one invariant).
+ * All copies in one group. Marks apply live to the shared selection, so going back
+ * to Duplicates already reflects them. The last unmarked copy can't be marked.
  */
 class PreviewFragment : Fragment() {
 
@@ -39,6 +40,8 @@ class PreviewFragment : Fragment() {
 
     private lateinit var adapter: PreviewFileAdapter
     private var groupId: Long = -1L
+    /** Which copies still exist on disk; checked once when the screen opens. */
+    private var existing: Set<Long> = emptySet()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentPreviewBinding.inflate(inflater, container, false)
@@ -56,38 +59,40 @@ class PreviewFragment : Fragment() {
         adapter = PreviewFileAdapter(onToggle = ::onToggle, onOpen = ::openFile)
         binding.fileList.layoutManager = LinearLayoutManager(requireContext())
         binding.fileList.adapter = adapter
-
         binding.backButton.setOnClickListener { findNavController().popBackStack() }
-        binding.doneButton.setOnClickListener { findNavController().popBackStack() }
+        binding.title.text = getString(R.string.copies_title, group.fileCount)
 
         viewLifecycleOwner.lifecycleScope.launch {
+            // Results can be days old; show copies that were deleted elsewhere as missing.
+            existing = withContext(Dispatchers.IO) {
+                group.files.filter { File(it.path).exists() }.mapTo(HashSet()) { it.id }
+            }
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Re-render whenever the shared selection changes.
-                selection.state.collect { render(group) }
+                selection.state.collect { render(selection.groupById(groupId) ?: group) }
             }
         }
     }
 
     private fun render(group: DuplicateGroup) {
-        // Keeper first, then the rest — makes the "kept by default" copy obvious.
+        // Recommended copy first, so the default choice is obvious.
         val ordered = group.files.sortedByDescending { it.id == group.keeperId }
         adapter.submitList(ordered.map {
             PreviewFileAdapter.Row(
                 file = it,
                 isKeeper = it.id == group.keeperId,
-                selected = selection.isFileSelected(it.id)
+                selected = selection.isFileSelected(it.id),
+                exists = it.id in existing
             )
         })
         val marked = group.files.filter { selection.isFileSelected(it.id) }
         binding.markedSummary.text = getString(
-            R.string.n_marked,
-            Formatters.count(marked.size), Formatters.bytes(marked.sumOf { it.sizeBytes })
+            R.string.marked_summary, Formatters.count(marked.size), Formatters.bytes(marked.sumOf { it.sizeBytes })
         )
     }
 
     private fun onToggle(file: FileItem) {
         if (!selection.toggleFile(groupId, file.id)) {
-            Toast.makeText(requireContext(), R.string.keep_one_hint, Toast.LENGTH_SHORT).show()
+            Snackbar.make(binding.root, R.string.keep_one, Snackbar.LENGTH_SHORT).show()
         }
     }
 

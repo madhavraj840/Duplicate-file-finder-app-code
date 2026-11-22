@@ -18,7 +18,7 @@ object FileOpener {
     fun open(context: Context, path: String, mime: String?) {
         val file = File(path)
         if (!file.exists()) {
-            Toast.makeText(context, file.name, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.file_missing, Toast.LENGTH_SHORT).show()
             return
         }
         try {
@@ -29,11 +29,11 @@ object FileOpener {
                 setDataAndType(uri, mime ?: "*/*")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            context.startActivity(Intent.createChooser(intent, context.getString(R.string.open_file)))
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.open_with)))
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(context, file.name, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.no_app_to_open, Toast.LENGTH_SHORT).show()
         } catch (e: IllegalArgumentException) {
-            Toast.makeText(context, file.name, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.no_app_to_open, Toast.LENGTH_SHORT).show()
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.bunkwise.duplicatefilefinder.core.common
 
 import java.util.Locale
-import kotlin.math.abs
 
 /** Pure formatting utilities (ARCHITECTURE §core:common). No Android deps. */
 object Formatters {
@@ -40,9 +39,4 @@ object Formatters {
     /** 12456 -> "12,456" using the given locale's grouping separators. */
     fun count(n: Int, locale: Locale = Locale.getDefault()): String =
         String.format(locale, "%,d", n)
-
-    fun percent(value: Int): String = "$value%"
-
-    /** True if two longs are within [tolerance] of each other. */
-    fun within(a: Long, b: Long, tolerance: Long): Boolean = abs(a - b) <= tolerance
 }

@@ -1,95 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface"
-    android:padding="20dp">
+    android:orientation="vertical">
 
-    <ImageView
-        android:id="@+id/closeButton"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="8dp"
-        android:src="@drawable/ic_close"
-        android:contentDescription="@null"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <LinearLayout style="@style/TopBar">
 
-    <ImageView
-        android:id="@+id/crown"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:layout_marginTop="24dp"
-        android:src="@drawable/ic_crown"
-        android:contentDescription="@null"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        <ImageButton
+            android:id="@+id/backButton"
+            style="@style/IconButton"
+            android:contentDescription="@string/cd_back"
+            android:src="@drawable/ic_back" />
 
-    <TextView
-        android:id="@+id/premiumTitle"
-        style="@style/Text.Display"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="@string/premium_title"
-        android:textSize="28sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/crown" />
-
-    <TextView
-        android:id="@+id/premiumSubtitle"
-        style="@style/Text.Secondary"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="@string/premium_subtitle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/premiumTitle" />
-
-    <LinearLayout
-        android:id="@+id/featureList"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:background="@drawable/bg_card"
-        android:orientation="vertical"
-        android:padding="18dp"
-        app:layout_constraintTop_toBottomOf="@id/premiumSubtitle">
-
-        <TextView style="@style/PremiumFeature" android:text="@string/premium_feature_smart" />
-        <TextView style="@style/PremiumFeature" android:text="@string/premium_feature_unlimited" />
-        <TextView style="@style/PremiumFeature" android:text="@string/premium_feature_noads" />
-        <TextView style="@style/PremiumFeature" android:text="@string/premium_feature_schedule" />
-        <TextView style="@style/PremiumFeature" android:text="@string/premium_feature_archive" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:text="@string/premium"
+            android:textAppearance="@style/Text.ScreenTitle" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/premiumActive"
-        style="@style/Text.Body"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:drawablePadding="8dp"
-        android:text="@string/premium_active"
-        android:textColor="@color/success"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_check_circle"
-        app:layout_constraintBottom_toTopOf="@id/toggleButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="12dp"
+                android:text="@string/premium_intro"
+                android:textAppearance="@style/Text.Secondary" />
+
+            <View style="@style/Divider" />
+
+            <LinearLayout style="@style/Row" android:clickable="false" android:background="@null">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/premium_f_unlimited" android:textAppearance="@style/Text.Body" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/premium_f_unlimited_desc" android:textAppearance="@style/Text.Secondary" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/Row" android:clickable="false" android:background="@null">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/premium_f_select_all" android:textAppearance="@style/Text.Body" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/premium_f_select_all_desc" android:textAppearance="@style/Text.Secondary" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/Row" android:clickable="false" android:background="@null">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/premium_f_folders" android:textAppearance="@style/Text.Body" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/Row" android:clickable="false" android:background="@null">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/premium_f_schedule" android:textAppearance="@style/Text.Body" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/Row" android:clickable="false" android:background="@null">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/premium_f_archive" android:textAppearance="@style/Text.Body" />
+            </LinearLayout>
+
+            <View style="@style/Divider" />
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:textAppearance="@style/Text.Secondary" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/toggleButton"
-        style="@style/Widget.Primary"
+        android:id="@+id/debugToggle"
+        style="@style/Button.Outlined"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="@string/activate_premium_test"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:visibility="gone" />
+</LinearLayout>

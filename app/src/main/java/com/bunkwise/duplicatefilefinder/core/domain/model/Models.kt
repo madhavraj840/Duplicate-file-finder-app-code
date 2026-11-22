@@ -33,27 +33,6 @@ enum class ScanSchedule {
         }
 }
 
-/** Real file type resolved from magic bytes (ARCHITECTURE §5.2). */
-enum class DetectedType {
-    JPEG, PNG, GIF, WEBP, HEIF, BMP,
-    MP4, VIDEO_OTHER,
-    PDF, DOCX, TXT,
-    AUDIO,
-    ZIP, BINARY, UNKNOWN;
-
-    fun toCategory(): FileCategory = when (this) {
-        JPEG, PNG, GIF, WEBP, HEIF, BMP -> FileCategory.IMAGES
-        MP4, VIDEO_OTHER -> FileCategory.VIDEOS
-        PDF, DOCX, TXT -> FileCategory.DOCUMENTS
-        AUDIO -> FileCategory.AUDIO
-        else -> FileCategory.OTHER
-    }
-
-    /** Only image/text-like types support similarity matching in v1. */
-    val supportsSimilarity: Boolean
-        get() = this == JPEG || this == PNG || this == WEBP || this == HEIF || this == BMP
-}
-
 /** A single file discovered during enumeration. UI-free, DB-free. */
 data class FileItem(
     val id: Long,
@@ -111,8 +90,7 @@ data class ScanProgress(
     val currentPath: String = "",
     val filesScanned: Int = 0,
     val duplicatesFound: Int = 0,
-    val elapsedMs: Long = 0L,
-    val slowedForBattery: Boolean = false
+    val elapsedMs: Long = 0L
 )
 
 /** The persisted outcome of the most recent completed scan. */
@@ -162,7 +140,9 @@ data class BinEntry(
     val displayName: String,
     val sizeBytes: Long,
     val deletedAtMs: Long,
-    val expiresAtMs: Long
+    val expiresAtMs: Long,
+    /** Files removed in the same cleanup share a batch id, so "Undo" restores them together. */
+    val batchId: Long = 0L
 ) {
     fun daysLeft(nowMs: Long): Int =
         ((expiresAtMs - nowMs) / (24L * 60 * 60 * 1000)).toInt().coerceAtLeast(0)

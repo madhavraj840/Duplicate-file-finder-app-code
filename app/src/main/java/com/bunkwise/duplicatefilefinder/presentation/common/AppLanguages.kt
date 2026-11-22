@@ -25,8 +25,11 @@ object AppLanguages {
         "pt" to "Português"
     )
 
+    /** A blank tag means "follow the phone"; resolve it to the language actually shown. */
+    fun effectiveTag(tag: String): String = tag.ifBlank { java.util.Locale.getDefault().language }
+
     fun displayName(tag: String): String =
-        entries.firstOrNull { it.first == tag }?.second ?: "English"
+        entries.firstOrNull { it.first == effectiveTag(tag) }?.second ?: "English"
 
     /** Applies the locale immediately (recreates activities to re-resolve strings). */
     fun apply(tag: String) {

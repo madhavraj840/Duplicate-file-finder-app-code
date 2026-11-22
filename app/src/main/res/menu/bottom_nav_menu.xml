@@ -2,16 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/homeFragment"
-        android:icon="@drawable/ic_home"
-        android:title="@string/nav_home" />
-    <item
-        android:id="@+id/resultsFragment"
         android:icon="@drawable/ic_search"
-        android:title="@string/nav_results" />
+        android:title="@string/nav_scan" />
     <item
         android:id="@+id/cleanupFragment"
-        android:icon="@drawable/ic_trash"
-        android:title="@string/nav_cleanup" />
+        android:icon="@drawable/ic_copy"
+        android:title="@string/nav_duplicates" />
     <item
         android:id="@+id/settingsFragment"
         android:icon="@drawable/ic_settings"

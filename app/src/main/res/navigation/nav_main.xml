@@ -4,58 +4,41 @@
     android:id="@+id/nav_main"
     app:startDestination="@id/homeFragment">
 
-    <fragment
-        android:id="@+id/onboardingFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.onboarding.OnboardingFragment"
-        android:label="Onboarding" />
-
+    <!-- Tabs -->
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.home.HomeFragment"
-        android:label="Home" />
-
-    <fragment
-        android:id="@+id/resultsFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.results.ResultsFragment"
-        android:label="Results" />
+        android:name="com.bunkwise.duplicatefilefinder.presentation.home.HomeFragment" />
 
     <fragment
         android:id="@+id/cleanupFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.cleanup.CleanupFragment"
-        android:label="Cleanup" />
+        android:name="com.bunkwise.duplicatefilefinder.presentation.cleanup.CleanupFragment" />
 
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.settings.SettingsFragment"
-        android:label="Settings" />
+        android:name="com.bunkwise.duplicatefilefinder.presentation.settings.SettingsFragment" />
 
+    <!-- Full-screen steps (no bottom bar) -->
     <fragment
         android:id="@+id/scanFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.scan.ScanFragment"
-        android:label="Scan" />
-
-    <fragment
-        android:id="@+id/reviewDeleteFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.reviewdelete.ReviewDeleteFragment"
-        android:label="Review &amp; Delete" />
-
-    <fragment
-        android:id="@+id/deleteFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.delete.DeleteFragment"
-        android:label="Delete" />
-
-    <fragment
-        android:id="@+id/premiumFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.premium.PremiumFragment"
-        android:label="Premium" />
-
-    <fragment
-        android:id="@+id/recycleBinFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.settings.RecycleBinFragment"
-        android:label="Recycle Bin" />
+        android:name="com.bunkwise.duplicatefilefinder.presentation.scan.ScanFragment" />
 
     <fragment
         android:id="@+id/previewFragment"
-        android:name="com.bunkwise.duplicatefilefinder.presentation.cleanup.PreviewFragment"
-        android:label="Preview" />
+        android:name="com.bunkwise.duplicatefilefinder.presentation.cleanup.PreviewFragment" />
+
+    <fragment
+        android:id="@+id/reviewDeleteFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.reviewdelete.ReviewDeleteFragment" />
+
+    <fragment
+        android:id="@+id/deleteFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.delete.DeleteFragment" />
+
+    <fragment
+        android:id="@+id/recycleBinFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.settings.RecycleBinFragment" />
+
+    <fragment
+        android:id="@+id/premiumFragment"
+        android:name="com.bunkwise.duplicatefilefinder.presentation.premium.PremiumFragment" />
 </navigation>

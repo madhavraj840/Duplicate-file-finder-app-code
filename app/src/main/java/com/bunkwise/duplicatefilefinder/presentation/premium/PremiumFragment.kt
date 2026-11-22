@@ -1,5 +1,6 @@
 package com.bunkwise.duplicatefilefinder.presentation.premium
 
+import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +17,10 @@ import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.databinding.FragmentPremiumBinding
 import kotlinx.coroutines.launch
 
+/**
+ * What Premium adds. There is no billing yet, so release builds only describe it;
+ * debug builds get a toggle to test premium features.
+ */
 class PremiumFragment : Fragment() {
 
     private var _binding: FragmentPremiumBinding? = null
@@ -23,22 +28,24 @@ class PremiumFragment : Fragment() {
 
     private val viewModel: PremiumViewModel by viewModels { requireContext().appContainer.viewModelFactory }
 
+    private val isDebugBuild: Boolean
+        get() = requireContext().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentPremiumBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.closeButton.setOnClickListener { findNavController().popBackStack() }
-        binding.toggleButton.setOnClickListener { viewModel.setPremium(!viewModel.isPremium.value) }
+        binding.backButton.setOnClickListener { findNavController().popBackStack() }
+        binding.debugToggle.isVisible = isDebugBuild
+        binding.debugToggle.setOnClickListener { viewModel.setPremium(!viewModel.isPremium.value) }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.isPremium.collect { premium ->
-                    binding.premiumActive.isVisible = premium
-                    binding.toggleButton.setText(
-                        if (premium) R.string.deactivate_premium_test else R.string.activate_premium_test
-                    )
+                    binding.statusText.setText(if (premium) R.string.premium_is_active else R.string.premium_unavailable)
+                    binding.debugToggle.setText(if (premium) R.string.premium_debug_off else R.string.premium_debug_on)
                 }
             }
         }

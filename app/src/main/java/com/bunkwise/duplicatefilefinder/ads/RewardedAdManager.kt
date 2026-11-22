@@ -7,26 +7,57 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
 
 /**
  * Owns the single rewarded-interstitial ad used to boost the daily file limit
- * (+500 files per completed view). Keeps one ad preloaded so the user rarely
- * waits: after every show — or any load/show failure — it eagerly reloads the
- * next one. All AdMob objects are touched on the main thread, matching the SDK's
- * threading contract; instances live for the process (held by AppContainer).
+ * (+500 files per completed view).
+ *
+ * Nothing ad-related runs at app start: the SDK is initialised the first time the
+ * quota sheet asks for an ad, and only after the UMP consent flow (GDPR) says ads
+ * may be requested. Users who never hit the limit, and all premium users, never
+ * load the ads SDK, which saves network, memory and battery. All AdMob objects are
+ * touched on the main thread.
  */
 class RewardedAdManager(private val appContext: Context) {
 
     private var ad: RewardedInterstitialAd? = null
     private var loading = false
+    private var sdkReady = false
 
     /** True when an ad is loaded and ready to [show] immediately. */
     val isReady: Boolean get() = ad != null
 
-    /** Loads the next ad if one isn't already loaded or in flight. Safe to call often. */
-    fun preload() {
+    /** Runs consent + SDK init once, then loads an ad if none is loaded or in flight. */
+    fun preload(activity: Activity) {
+        if (ad != null || loading) return
+        ensureSdk(activity) { load() }
+    }
+
+    private fun ensureSdk(activity: Activity, then: () -> Unit) {
+        if (sdkReady) { then(); return }
+        val consent = UserMessagingPlatform.getConsentInformation(appContext)
+        val initIfAllowed = {
+            if (consent.canRequestAds() && !sdkReady) {
+                sdkReady = true
+                MobileAds.initialize(appContext) { then() }
+            }
+        }
+        consent.requestConsentInfoUpdate(
+            activity, ConsentRequestParameters.Builder().build(),
+            { UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { initIfAllowed() } },
+            { error ->
+                Log.w(TAG, "Consent info update failed: ${error.message}")
+                initIfAllowed() // consent from an earlier session may still allow ads
+            }
+        )
+    }
+
+    private fun load() {
         if (ad != null || loading) return
         loading = true
         RewardedInterstitialAd.load(
@@ -55,7 +86,7 @@ class RewardedAdManager(private val appContext: Context) {
     fun show(activity: Activity, onReward: () -> Unit, onUnavailable: () -> Unit) {
         val current = ad
         if (current == null) {
-            preload()
+            preload(activity)
             onUnavailable()
             return
         }
@@ -64,12 +95,12 @@ class RewardedAdManager(private val appContext: Context) {
         var earned = false
         current.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
-                preload()
+                load()
                 if (earned) onReward()
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                preload()
+                load()
                 onUnavailable()
             }
         }

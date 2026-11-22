@@ -1,6 +1,7 @@
 package com.bunkwise.duplicatefilefinder.core.data
 
 import android.content.Context
+import android.util.AtomicFile
 import com.bunkwise.duplicatefilefinder.core.domain.model.Confidence
 import com.bunkwise.duplicatefilefinder.core.domain.model.DuplicateGroup
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
@@ -10,6 +11,7 @@ import com.bunkwise.duplicatefilefinder.core.domain.model.ScanMode
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanResult
 import com.bunkwise.duplicatefilefinder.core.domain.model.Signal
 import com.bunkwise.duplicatefilefinder.core.domain.repository.ScanResultRepository
+import com.bunkwise.duplicatefilefinder.core.engine.KeeperRanker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +31,7 @@ class ScanResultRepositoryImpl(
     context: Context
 ) : ScanResultRepository {
 
-    private val file = File(context.filesDir, "last_scan.json")
+    private val file = AtomicFile(File(context.filesDir, "last_scan.json"))
     private val state = MutableStateFlow<ScanResult?>(loadFromDisk())
 
     val flow: StateFlow<ScanResult?> = state.asStateFlow()
@@ -39,7 +41,16 @@ class ScanResultRepositoryImpl(
 
     override suspend fun save(result: ScanResult) {
         state.value = result
-        withContext(Dispatchers.IO) { runCatching { file.writeText(serialize(result).toString()) } }
+        withContext(Dispatchers.IO) {
+            // AtomicFile: a crash mid-write keeps the previous snapshot intact.
+            val out = file.startWrite()
+            try {
+                out.write(serialize(result).toString().toByteArray())
+                file.finishWrite(out)
+            } catch (t: Throwable) {
+                file.failWrite(out)
+            }
+        }
     }
 
     override suspend fun clear() {
@@ -54,7 +65,7 @@ class ScanResultRepositoryImpl(
             when {
                 kept.size < 2 -> null // a group needs >= 2 files
                 else -> {
-                    val keeperId = if (kept.any { it.id == g.keeperId }) g.keeperId else kept.first().id
+                    val keeperId = if (kept.any { it.id == g.keeperId }) g.keeperId else KeeperRanker.keeperId(kept)
                     g.copy(files = kept, keeperId = keeperId)
                 }
             }
@@ -98,8 +109,8 @@ class ScanResultRepositoryImpl(
     }
 
     private fun loadFromDisk(): ScanResult? = runCatching {
-        if (!file.exists()) return null
-        parse(JSONObject(file.readText()))
+        if (!file.baseFile.exists()) return null
+        parse(JSONObject(String(file.readFully())))
     }.getOrNull()
 
     private fun parse(o: JSONObject): ScanResult {

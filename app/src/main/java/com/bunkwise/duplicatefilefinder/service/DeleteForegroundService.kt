@@ -9,6 +9,8 @@ import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.core.common.Result
+import com.bunkwise.duplicatefilefinder.core.domain.error.AppError
+import com.bunkwise.duplicatefilefinder.core.domain.model.FileItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,10 +27,25 @@ class DeleteForegroundService : Service() {
     companion object {
         const val ACTION_START = "action_start_delete"
 
-        fun start(context: Context) {
+        /**
+         * Stages [files] and starts the service. The controller flips to Running
+         * synchronously, before the UI navigates, so the progress screen can never
+         * observe a stale status from a previous batch. Returns false if a batch is
+         * already running (its staged files must not be overwritten).
+         */
+        fun start(context: Context, files: List<FileItem>, archive: Boolean): Boolean {
+            val container = context.appContainer
+            // A scan finishing mid-cleanup would overwrite the results with removed files.
+            if (container.deleteController.isRunning || container.scanController.isRunning || files.isEmpty()) return false
+            container.pendingDeletionFiles = files
+            container.pendingArchive = archive
+            container.resultBeforeDelete = container.scanResultRepository.current()
+            container.deleteController.onStart(files.size)
             val intent = Intent(context, DeleteForegroundService::class.java).apply { action = ACTION_START }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
-            else context.startService(intent)
+            return runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
+                else context.startService(intent)
+            }.onFailure { container.deleteController.onFailed(AppError.Delete.UNKNOWN) }.isSuccess
         }
     }
 
@@ -45,15 +62,13 @@ class DeleteForegroundService : Service() {
 
     private fun startDelete() {
         val container = appContainer
-        if (container.deleteController.isRunning) return
         val files = container.pendingDeletionFiles
         val archive = container.pendingArchive
-        if (files.isEmpty()) { stopSelf(); return }
-
-        container.deleteController.onStart(files.size)
-        val started = System.currentTimeMillis()
         startAsForeground(container.notifications.buildDeleteProgress(DeleteProgress(total = files.size)))
+        if (job?.isActive == true) return
+        if (files.isEmpty()) { finish(); return }
 
+        val started = System.currentTimeMillis()
         job = scope.launch {
             val treeUri = if (archive) container.settingsRepository.current().archiveTreeUri else null
             val result = container.deletionEngine.delete(files, archive, treeUri) { deleted, total, freed, current ->
@@ -67,10 +82,11 @@ class DeleteForegroundService : Service() {
                     // Remove exactly the files that were deleted — a skip anywhere in the
                     // batch must not shift which ids get dropped from the results.
                     if (outcome.deletedIds.isNotEmpty()) container.scanResultRepository.removeFiles(outcome.deletedIds)
+                    container.fileEnumerator.invalidateSizes()
                     container.notifications.notifyDeleteComplete(outcome, archive)
                     container.deleteController.onCompleted(outcome, archive)
                 }
-                is Result.Error -> container.deleteController.onFailed()
+                is Result.Error -> container.deleteController.onFailed(result.error)
             }
             container.pendingDeletionFiles = emptyList()
             finish()
@@ -102,8 +118,22 @@ class DeleteForegroundService : Service() {
         stopSelf()
     }
 
+    /**
+     * Android 15+ dataSync time limit reached: stop now or the system crashes the app.
+     * Files already moved stay safe — the bin journal indexes them.
+     */
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        job?.cancel()
+        appContainer.deleteController.onFailed(AppError.Delete.UNKNOWN)
+        finish()
+    }
+
     override fun onDestroy() {
         scope.coroutineContext[Job]?.cancel()
+        // Killed before reaching a terminal state: release the controller so the UI
+        // isn't stuck on "Running" and the next batch isn't silently refused.
+        val controller = appContainer.deleteController
+        if (controller.isRunning) controller.onFailed(AppError.Delete.UNKNOWN)
         super.onDestroy()
     }
 }

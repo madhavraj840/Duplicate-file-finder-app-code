@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- One copy in a group. Row tap = mark/unmark; thumbnail tap = open the file. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
-    android:background="@drawable/bg_card"
-    android:clickable="true"
-    android:focusable="true"
+    android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
+    android:minHeight="72dp"
     android:orientation="horizontal"
-    android:padding="12dp">
+    android:paddingVertical="8dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="4dp">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/thumb"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:background="@drawable/bg_thumb"
+        android:background="@color/surface_variant"
+        android:padding="0dp"
         android:scaleType="centerCrop"
-        android:contentDescription="@null" />
+        app:shapeAppearanceOverlay="@style/Shape.Thumb" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -30,46 +30,40 @@
 
         <TextView
             android:id="@+id/fileName"
-            style="@style/Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="middle"
-            android:maxLines="1"
-            android:textStyle="bold"
-            tools:text="IMG_20240520_120000.jpg" />
+            android:singleLine="true"
+            android:textAppearance="@style/Text.Body" />
+
+        <TextView
+            android:id="@+id/folder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="start"
+            android:singleLine="true"
+            android:textAppearance="@style/Text.Secondary" />
 
         <TextView
             android:id="@+id/fileMeta"
-            style="@style/Text.Caption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:ellipsize="middle"
-            android:maxLines="1"
-            tools:text="2.4 MB • /DCIM/Camera" />
+            android:textAppearance="@style/Text.Caption" />
 
         <TextView
-            android:id="@+id/keeperBadge"
+            android:id="@+id/recommended"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/bg_pill"
-            android:backgroundTint="@color/success_container"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="2dp"
-            android:text="@string/best_copy"
-            android:textColor="@color/success"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            tools:visibility="visible" />
+            android:text="@string/recommended"
+            android:textAppearance="@style/Text.Caption"
+            android:textColor="@color/primary" />
     </LinearLayout>
 
-    <ImageView
+    <com.google.android.material.checkbox.MaterialCheckBox
         android:id="@+id/check"
-        android:layout_width="26dp"
-        android:layout_height="26dp"
-        android:layout_marginStart="10dp"
-        android:background="@drawable/bg_checkbox_empty"
-        android:contentDescription="@string/select_all" />
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:clickable="false"
+        android:focusable="false"
+        android:importantForAccessibility="no" />
 </LinearLayout>

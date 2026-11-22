@@ -38,6 +38,9 @@ class AppContainer(context: Context) {
 
     val dispatchers: DispatcherProvider = DefaultDispatcherProvider()
 
+    /** For short work that must finish even if the screen that started it goes away. */
+    val appScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+
     // Data
     val fileEnumerator: FileEnumerator by lazy { FileEnumeratorImpl(appContext, settingsRepository) }
     val storageStats: StorageStatsProvider by lazy { StorageStatsProviderImpl() }
@@ -78,11 +81,7 @@ class AppContainer(context: Context) {
     @Volatile
     var pendingArchive: Boolean = false
 
-    /**
-     * One-shot flag: scan just completed, so the Results screen should play its
-     * confetti burst once. Consumed (reset) by ResultsFragment on first show, so
-     * revisiting Results from Home does not re-trigger it.
-     */
+    /** The scan result as it was before the running/last cleanup, for "Undo". */
     @Volatile
-    var pendingScanCelebration: Boolean = false
+    var resultBeforeDelete: com.bunkwise.duplicatefilefinder.core.domain.model.ScanResult? = null
 }

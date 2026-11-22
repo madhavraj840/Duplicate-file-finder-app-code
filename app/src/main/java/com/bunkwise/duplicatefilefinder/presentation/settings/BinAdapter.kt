@@ -2,6 +2,7 @@ package com.bunkwise.duplicatefilefinder.presentation.settings
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -16,9 +17,8 @@ import com.bunkwise.duplicatefilefinder.presentation.common.CategoryUi
 import java.io.File
 
 /**
- * Recycle-bin rows with thumbnails (image/video previews, type icons for the rest)
- * and multi-select checkboxes. Tapping a row toggles its selection when a selection
- * is active, otherwise opens the file so users can see which is which.
+ * Recycle-bin rows: thumbnail (photos/videos) or a type icon, where the file came
+ * from and how long it stays. Tapping opens the file unless a selection is active.
  */
 class BinAdapter(
     private val onToggle: (Long) -> Unit,
@@ -28,10 +28,8 @@ class BinAdapter(
 
     data class Row(val entry: BinEntry, val filePath: String, val selected: Boolean)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val binding = ItemBinEntryBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return VH(binding)
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
+        VH(ItemBinEntryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(getItem(position))
 
@@ -40,45 +38,39 @@ class BinAdapter(
             val ctx = b.root.context
             val entry = row.entry
             b.binName.text = entry.displayName
-            val days = ctx.getString(R.string.days_left, entry.daysLeft(System.currentTimeMillis()).toString())
-            b.binMeta.text = "${Formatters.bytes(entry.sizeBytes)} • $days"
+            b.binFolder.text = File(entry.originalPath).parent ?: ""
+            val days = entry.daysLeft(System.currentTimeMillis())
+            b.binMeta.text = ctx.getString(
+                R.string.file_meta, Formatters.bytes(entry.sizeBytes),
+                ctx.resources.getQuantityString(R.plurals.days_left, days, days)
+            )
 
             val category = categoryOf(entry.displayName)
             if (CategoryUi.isVisualMedia(category)) {
                 b.thumb.clearColorFilter()
-                Glide.with(b.thumb).load(File(row.filePath)).centerCrop()
-                    .placeholder(R.drawable.bg_thumb).into(b.thumb)
+                b.thumb.scaleType = ImageView.ScaleType.CENTER_CROP
+                Glide.with(b.thumb).load(File(row.filePath)).centerCrop().into(b.thumb)
             } else {
                 Glide.with(b.thumb).clear(b.thumb)
+                b.thumb.scaleType = ImageView.ScaleType.CENTER
                 b.thumb.setImageResource(CategoryUi.icon(category))
-                b.thumb.setColorFilter(ContextCompat.getColor(ctx, R.color.text_tertiary))
+                b.thumb.setColorFilter(ContextCompat.getColor(ctx, R.color.text_secondary))
             }
 
-            if (row.selected) {
-                b.check.setImageResource(R.drawable.ic_check_box)
-                b.check.background = null
-            } else {
-                b.check.setImageDrawable(null)
-                b.check.setBackgroundResource(R.drawable.bg_checkbox_empty)
-            }
-
+            b.check.isChecked = row.selected
+            b.check.contentDescription = entry.displayName
             b.check.setOnClickListener { onToggle(entry.id) }
-            b.root.setOnClickListener {
-                if (selectionMode()) onToggle(entry.id) else onOpen(entry)
-            }
+            b.root.setOnClickListener { if (selectionMode()) onToggle(entry.id) else onOpen(entry) }
             b.root.setOnLongClickListener { onToggle(entry.id); true }
         }
     }
 
-    private fun categoryOf(name: String): FileCategory {
-        val ext = name.substringAfterLast('.', "").lowercase()
-        return when (ext) {
-            in IMAGE_EXT -> FileCategory.IMAGES
-            in VIDEO_EXT -> FileCategory.VIDEOS
-            in AUDIO_EXT -> FileCategory.AUDIO
-            in DOC_EXT -> FileCategory.DOCUMENTS
-            else -> FileCategory.OTHER
-        }
+    private fun categoryOf(name: String): FileCategory = when (name.substringAfterLast('.', "").lowercase()) {
+        in IMAGE_EXT -> FileCategory.IMAGES
+        in VIDEO_EXT -> FileCategory.VIDEOS
+        in AUDIO_EXT -> FileCategory.AUDIO
+        in DOC_EXT -> FileCategory.DOCUMENTS
+        else -> FileCategory.OTHER
     }
 
     private companion object {

@@ -10,6 +10,7 @@ import android.os.PowerManager
 import androidx.core.app.ServiceCompat
 import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.core.common.Result
+import com.bunkwise.duplicatefilefinder.core.domain.error.AppError
 import com.bunkwise.duplicatefilefinder.core.domain.engine.ScanRequest
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanMode
@@ -35,15 +36,25 @@ class ScanForegroundService : Service() {
         const val EXTRA_CATEGORIES = "extra_categories"
         const val EXTRA_BUDGET = "extra_budget"
 
-        fun start(context: Context, mode: ScanMode, categories: Set<FileCategory>, budget: Int) {
+        /**
+         * Starts a scan. The controller flips to Running synchronously, before the UI
+         * navigates, so the Scan screen can never act on a stale Completed status left
+         * over from an earlier scan. Returns false if a scan is already running.
+         */
+        fun start(context: Context, mode: ScanMode, categories: Set<FileCategory>, budget: Int): Boolean {
+            val controller = context.appContainer.scanController
+            if (controller.isRunning) return false
+            controller.onStart(mode)
             val intent = Intent(context, ScanForegroundService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_MODE, mode.name)
                 putExtra(EXTRA_CATEGORIES, categories.map { it.name }.toTypedArray())
                 putExtra(EXTRA_BUDGET, budget)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
-            else context.startService(intent)
+            return runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
+                else context.startService(intent)
+            }.onFailure { controller.onFailed(AppError.Scan.UNKNOWN) }.isSuccess
         }
 
         fun stop(context: Context) {
@@ -70,7 +81,9 @@ class ScanForegroundService : Service() {
 
     private fun startScan(intent: Intent) {
         val container = appContainer
-        if (container.scanController.isRunning) return // idempotent
+        // Every startForegroundService() must be answered with startForeground().
+        startAsForeground(container.notifications.buildScanProgress(ScanProgress()))
+        if (job?.isActive == true) return // idempotent
 
         val mode = runCatching { ScanMode.valueOf(intent.getStringExtra(EXTRA_MODE) ?: "") }
             .getOrDefault(ScanMode.EXACT)
@@ -79,8 +92,6 @@ class ScanForegroundService : Service() {
             .ifEmpty { setOf(FileCategory.ALL) }
         val budget = intent.getIntExtra(EXTRA_BUDGET, Int.MAX_VALUE)
 
-        container.scanController.onStart(mode)
-        startAsForeground(container.notifications.buildScanProgress(ScanProgress()))
         acquireWakeLock()
 
         job = scope.launch {
@@ -92,6 +103,7 @@ class ScanForegroundService : Service() {
             when (result) {
                 is Result.Success -> {
                     container.scanResultRepository.save(result.data)
+                    container.fileEnumerator.invalidateSizes()
                     if (lastScanned > 0) container.quotaRepository.addUsage(lastScanned)
                     container.notifications.notifyScanComplete(result.data)
                     container.scanController.onCompleted(result.data)
@@ -162,9 +174,21 @@ class ScanForegroundService : Service() {
         stopSelf()
     }
 
+    /**
+     * Android 15+: dataSync services get ~6h per 24h. Not stopping within seconds of
+     * this callback crashes the app, so end the scan the same way Stop does.
+     */
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        stopScan()
+    }
+
     override fun onDestroy() {
         releaseWakeLock()
         scope.coroutineContext[Job]?.cancel()
+        // Killed before reaching a terminal state (OEM task killer, "stop app"): release
+        // the controller, otherwise every later scan is refused and the UI spins forever.
+        val controller = appContainer.scanController
+        if (controller.isRunning) controller.onStopped()
         super.onDestroy()
     }
 }

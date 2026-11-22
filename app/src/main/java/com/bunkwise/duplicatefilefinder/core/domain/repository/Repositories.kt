@@ -22,8 +22,11 @@ interface FileEnumerator {
     /** Fast COUNT(*) estimate used for the pre-scan quota check. */
     suspend fun estimateCount(categories: Set<FileCategory>): Int
 
-    /** Total on-disk size per category for the Home "Choose Files" cards. */
+    /** Total on-disk size per category (cached until the media library changes). */
     suspend fun sizeByCategory(): Map<FileCategory, Long>
+
+    /** Drops cached sizes/counts; call after the app itself adds or removes files. */
+    fun invalidateSizes()
 }
 
 /** Persists the LAST completed scan; source of truth for Results/Cleanup. */
@@ -54,10 +57,8 @@ interface QuotaRepository {
 interface SettingsRepository {
     val settings: Flow<AppSettings>
     suspend fun current(): AppSettings
-    suspend fun setOnboardingDone(done: Boolean)
     suspend fun setPremium(premium: Boolean)
     suspend fun setArchiveMode(enabled: Boolean)
-    suspend fun setAutoCleanup(enabled: Boolean)
     suspend fun setLanguage(tag: String)
     suspend fun setScanFolders(paths: Set<String>)
     suspend fun setExcludeFolders(paths: Set<String>)
@@ -66,11 +67,9 @@ interface SettingsRepository {
 }
 
 data class AppSettings(
-    val onboardingDone: Boolean = false,
     val isPremium: Boolean = false,
     val archiveMode: Boolean = false,
-    val autoCleanup: Boolean = false,
-    val languageTag: String = "en",
+    val languageTag: String = "",
     /** Restrict scans to these absolute folder paths; empty = whole device. */
     val scanFolders: Set<String> = emptySet(),
     /** Absolute folder paths skipped during scans (in addition to built-in exclusions). */
@@ -97,7 +96,9 @@ data class DeletionOutcome(
     val skipped: List<SkippedFile>,
     /** Ids of the files that were actually removed — skips leave no id here, so
      *  result-sync must use this rather than assuming the first N succeeded. */
-    val deletedIds: Set<Long> = emptySet()
+    val deletedIds: Set<Long> = emptySet(),
+    /** Recycle-bin batch of this cleanup (0 for archives, which can't be undone here). */
+    val batchId: Long = 0L
 )
 
 data class SkippedFile(val displayName: String, val reason: AppError.Delete)

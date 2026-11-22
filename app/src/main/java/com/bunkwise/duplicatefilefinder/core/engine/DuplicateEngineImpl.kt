@@ -90,12 +90,11 @@ class DuplicateEngineImpl(
             emit { copy(phase = ScanPhase.ENUMERATING, filesScanned = files.size, percent = 10) }
 
             val uf = UnionFind(files.size)
-            val inGroup = BooleanArray(files.size)
+            // Each union of two different components adds exactly one removable copy,
+            // so this equals the final sum of (group size - 1) at every point.
             var matched = 0
             fun markUnion(a: Int, b: Int) {
-                uf.union(a, b)
-                if (!inGroup[a]) { inGroup[a] = true; matched++ }
-                if (!inGroup[b]) { inGroup[b] = true; matched++ }
+                if (uf.find(a) != uf.find(b)) { uf.union(a, b); matched++ }
             }
 
             // Written from parallel IO workers → concurrent map.
@@ -229,7 +228,11 @@ class DuplicateEngineImpl(
 
     /**
      * Seed-based clustering (replaces naive transitive union). Candidates come from
-     * 4x16-bit dHash bands (never O(n^2)); a file joins a cluster ONLY when it is
+     * 8x8-bit dHash bands (never O(n^2)). By pigeonhole, two hashes that differ in
+     * at most 7 bits share at least one whole band, so every pair within the Similar
+     * threshold is guaranteed to be compared; wider modes also catch most pairs up to
+     * their threshold. (The old 4x16-bit bands only guaranteed distance <= 3, so
+     * Very Similar / Deep rarely found more than Similar.) A file joins a cluster ONLY when it is
      * within threshold of that cluster's SEED — never transitively — which stops
      * A~B~C chaining from collapsing unrelated images into one giant bogus group.
      * A match must clear BOTH the dHash AND aHash thresholds (two independent
@@ -243,10 +246,10 @@ class DuplicateEngineImpl(
         if (feat.size < 2) return
         val (dThresh, aThresh) = thresholdsFor(mode)
 
-        val bands = Array(4) { HashMap<Int, MutableList<Int>>() }
+        val bands = Array(BANDS) { HashMap<Int, MutableList<Int>>() }
         for ((i, h) in feat) {
-            for (b in 0 until 4) {
-                val v = ((h.dHash ushr (b * 16)) and 0xFFFF).toInt()
+            for (b in 0 until BANDS) {
+                val v = ((h.dHash ushr (b * 8)) and 0xFF).toInt()
                 bands[b].getOrPut(v) { ArrayList() }.add(i)
             }
         }
@@ -258,8 +261,8 @@ class DuplicateEngineImpl(
             val seedH = feat.getValue(seed)
 
             val candidates = LinkedHashSet<Int>()
-            for (b in 0 until 4) {
-                val v = ((seedH.dHash ushr (b * 16)) and 0xFFFF).toInt()
+            for (b in 0 until BANDS) {
+                val v = ((seedH.dHash ushr (b * 8)) and 0xFF).toInt()
                 bands[b][v]?.let { candidates.addAll(it) }
             }
             for (c in candidates) {
@@ -338,5 +341,8 @@ class DuplicateEngineImpl(
     private companion object {
         /** Above this many hashed members, evidence uses the O(M) anchor path. */
         const val MAX_PAIRWISE_EVIDENCE = 24
+
+        /** 8 bands of 8 bits over the 64-bit dHash (see [clusterSimilar]). */
+        const val BANDS = 8
     }
 }

@@ -5,58 +5,53 @@ import androidx.lifecycle.viewModelScope
 import com.bunkwise.duplicatefilefinder.core.domain.model.DuplicateGroup
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileItem
+import com.bunkwise.duplicatefilefinder.core.domain.model.ScanResult
 import com.bunkwise.duplicatefilefinder.core.domain.repository.ScanResultRepository
 import com.bunkwise.duplicatefilefinder.core.domain.repository.SettingsRepository
-import com.bunkwise.duplicatefilefinder.core.domain.repository.StorageStatsProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.bunkwise.duplicatefilefinder.core.engine.KeeperRanker
+import java.io.File
 
 /**
- * The ONE selection store observed by Cleanup, its stat grid, the bottom bar, the
- * Preview overlay and the Review/Delete overlays (DESIGN §5 — they can never
- * disagree). Selection is per-FILE (so the Preview overlay can mark individual
- * copies) but the group checkbox / "Select All" still marks every non-keeper at
- * once. The keeper is never marked automatically and the UI blocks marking the
- * last surviving copy, which surfaces the "keep at least one" invariant
- * (ARCHITECTURE §7.4) as prevention rather than an error.
+ * The ONE selection store observed by Duplicates, the group detail screen and
+ * Review (DESIGN §5 — they can never disagree). Selection is per file; the group
+ * checkbox marks every non-keeper at once. [deletable] is the single place that
+ * enforces "at least one copy of every group stays".
  */
 class SharedSelectionViewModel(
     private val scanRepo: ScanResultRepository,
-    private val settings: SettingsRepository,
-    private val storage: StorageStatsProvider
+    settings: SettingsRepository
 ) : ViewModel() {
 
-    enum class SortMode { SIZE, NAME, DUPLICATES }
+    /** Each sort has its natural direction: biggest, A-Z, most copies. */
+    enum class SortMode { SIZE, NAME, COPIES }
 
     data class GroupUi(
         val group: DuplicateGroup,
         /** Files in this group currently marked for deletion. */
         val markedCount: Int
-    ) {
-        val selected: Boolean get() = markedCount > 0
-    }
+    )
 
     data class CleanupState(
-        val hasResult: Boolean = false,
+        val result: ScanResult? = null,
+        /** Groups after filter, search and sort. */
         val groups: List<GroupUi> = emptyList(),
-        val totalDuplicateFiles: Int = 0,
-        val duplicateBytes: Long = 0L,
-        val percentOfTotal: Int = 0,
-        val groupCount: Int = 0,
+        /** Number of groups per file type in the whole result (for the filter menu). */
+        val typeCounts: Map<FileCategory, Int> = emptyMap(),
         val markedBytes: Long = 0L,
         val markedFiles: Int = 0,
         val category: FileCategory = FileCategory.ALL,
         val sort: SortMode = SortMode.SIZE,
-        val ascending: Boolean = false,
         val query: String = "",
         val archiveMode: Boolean = false,
+        val archiveTreeUri: String? = null,
         val isPremium: Boolean = false
     )
 
@@ -64,17 +59,15 @@ class SharedSelectionViewModel(
     private val selectedFileIds = MutableStateFlow<Set<Long>>(emptySet())
     private val category = MutableStateFlow(FileCategory.ALL)
     private val sort = MutableStateFlow(SortMode.SIZE)
-    private val ascending = MutableStateFlow(false)
     private val query = MutableStateFlow("")
-    private val deviceTotal = MutableStateFlow(0L)
 
-    /** Group whose Preview overlay is currently open (set before navigating). */
+    /** Group whose detail screen is open (set before navigating). */
     var previewGroupId: Long = -1L
 
     init {
-        viewModelScope.launch { deviceTotal.value = storage.current().totalBytes }
-        // Reset the selection whenever a NEW scan result is loaded, so marks from a
-        // previous scan can never carry over onto a different scan's files.
+        // A NEW scan result starts with an empty selection, so marks can never carry
+        // over to a different scan. When the same result is trimmed (files deleted),
+        // only drop the ids that no longer exist.
         viewModelScope.launch {
             var lastStamp: Long? = null
             scanRepo.observe().collect { result ->
@@ -82,78 +75,74 @@ class SharedSelectionViewModel(
                 if (stamp != lastStamp) {
                     lastStamp = stamp
                     selectedFileIds.value = emptySet()
+                    category.value = FileCategory.ALL
+                } else if (result != null) {
+                    val live = result.groups.flatMapTo(HashSet()) { g -> g.files.map { it.id } }
+                    selectedFileIds.value = selectedFileIds.value.intersect(live)
                 }
             }
         }
     }
 
     val state: StateFlow<CleanupState> = run {
-        val filters = combine(category, sort, ascending, query) { c, s, a, q -> Filters(c, s, a, q) }
-        combine(scanRepo.observe(), selectedFileIds, filters, settings.settings, deviceTotal) {
-                result, selected, f, set, total ->
-            if (result == null) return@combine CleanupState(hasResult = false)
-            val allGroups = result.groups
-
-            var filtered = if (f.category == FileCategory.ALL) allGroups
-            else allGroups.filter { it.category == f.category }
-            if (f.query.isNotBlank()) {
-                val q = f.query.trim().lowercase()
-                filtered = filtered.filter { g -> g.files.any { it.displayName.lowercase().contains(q) } }
-            }
-            filtered = when (f.sort) {
-                SortMode.SIZE -> filtered.sortedBy { it.wastedBytes }
-                SortMode.NAME -> filtered.sortedBy { it.files.firstOrNull()?.displayName?.lowercase() ?: "" }
-                SortMode.DUPLICATES -> filtered.sortedBy { it.duplicateCount }
-            }
-            if (!f.ascending) filtered = filtered.reversed()
-
-            val markedBytes = allGroups.flatMap { it.files }.filter { it.id in selected }.sumOf { it.sizeBytes }
-            val markedFiles = selected.size
-            val dupBytes = allGroups.sumOf { it.wastedBytes }
-            val percent = if (total > 0) ((dupBytes * 100.0) / total).toInt().coerceIn(0, 100) else 0
-
+        val filters = combine(category, sort, query) { c, s, q -> Filters(c, s, q) }
+        combine(scanRepo.observe(), selectedFileIds, filters, settings.settings) { result, selected, f, set ->
+            if (result == null) return@combine CleanupState(isPremium = set.isPremium)
+            val all = result.groups
+            val visible = filterAndSort(all, f)
+            val marked = deletable(all, selected)
             CleanupState(
-                hasResult = true,
-                groups = filtered.map { g -> GroupUi(g, g.files.count { it.id in selected }) },
-                totalDuplicateFiles = allGroups.sumOf { it.duplicateCount },
-                duplicateBytes = dupBytes,
-                percentOfTotal = percent,
-                groupCount = allGroups.size,
-                markedBytes = markedBytes,
-                markedFiles = markedFiles,
+                result = result,
+                groups = visible.map { g -> GroupUi(g, g.files.count { it.id in selected }) },
+                typeCounts = all.groupingBy { it.category }.eachCount(),
+                markedBytes = marked.sumOf { it.sizeBytes },
+                markedFiles = marked.size,
                 category = f.category,
                 sort = f.sort,
-                ascending = f.ascending,
                 query = f.query,
-                archiveMode = set.archiveMode,
+                // Archiving is premium; a lapsed premium falls back to the recycle bin.
+                archiveMode = set.isPremium && set.archiveMode,
+                archiveTreeUri = set.archiveTreeUri,
                 isPremium = set.isPremium
             )
         }
-            // Filtering + sorting (O(n log n)) + object mapping runs on every checkbox
-            // tap; keep it off the main thread so large result sets never drop frames.
+            // Filtering + sorting + mapping runs on every checkbox tap; keep it off the
+            // main thread so large results never drop frames.
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CleanupState())
     }
 
-    private data class Filters(
-        val category: FileCategory, val sort: SortMode, val ascending: Boolean, val query: String
-    )
+    private data class Filters(val category: FileCategory, val sort: SortMode, val query: String)
+
+    private fun filterAndSort(groups: List<DuplicateGroup>, f: Filters): List<DuplicateGroup> {
+        var out = if (f.category == FileCategory.ALL) groups else groups.filter { it.category == f.category }
+        val q = f.query.trim().lowercase()
+        if (q.isNotEmpty()) out = out.filter { g -> g.files.any { it.displayName.lowercase().contains(q) } }
+        return when (f.sort) {
+            SortMode.SIZE -> out.sortedByDescending { it.wastedBytes }
+            SortMode.NAME -> out.sortedBy { keeperOf(it)?.displayName?.lowercase() ?: "" }
+            SortMode.COPIES -> out.sortedByDescending { it.fileCount }
+        }
+    }
 
     // ---- selection ----
 
-    /** Group checkbox / "Select All": mark every non-keeper, or clear if any marked. */
+    /**
+     * Group checkbox: if anything in the group is marked, clear the whole group;
+     * otherwise mark every copy except the keeper (and make sure the keeper itself
+     * is unmarked, so the group can never end up fully marked).
+     */
     fun toggleGroup(groupId: Long) {
         val group = groupById(groupId) ?: return
-        val nonKeepers = group.files.filter { it.id != group.keeperId }.map { it.id }.toSet()
+        val all = group.files.map { it.id }.toSet()
         val current = selectedFileIds.value
-        val anyMarked = nonKeepers.any { it in current }
-        selectedFileIds.value = if (anyMarked) current - nonKeepers else current + nonKeepers
+        selectedFileIds.value = if (all.any { it in current }) current - all
+        else current - group.keeperId + (all - group.keeperId)
     }
 
     /**
-     * Toggle a single file (Preview overlay). Never marks the keeper's last twin:
-     * at least one file per group must stay unmarked. Returns false when the toggle
-     * was blocked so the UI can show the "keep at least one" hint.
+     * Toggle a single file (group detail). Refuses to mark the last unmarked copy of
+     * a group; returns false then, so the UI can explain why.
      */
     fun toggleFile(groupId: Long, fileId: Long): Boolean {
         val group = groupById(groupId) ?: return false
@@ -162,9 +151,7 @@ class SharedSelectionViewModel(
             selectedFileIds.value = current - fileId
             return true
         }
-        // Marking this one: block if it would leave zero survivors in the group.
-        val groupIds = group.files.map { it.id }.toSet()
-        val survivingAfter = groupIds.count { it != fileId && it !in current }
+        val survivingAfter = group.files.count { it.id != fileId && it.id !in current }
         if (survivingAfter < 1) return false
         selectedFileIds.value = current + fileId
         return true
@@ -172,33 +159,57 @@ class SharedSelectionViewModel(
 
     fun isFileSelected(fileId: Long): Boolean = fileId in selectedFileIds.value
 
-    /** Smart Cleanup: mark every group's non-keepers for deletion (premium). */
-    fun selectAllGroups() {
-        val result = scanRepo.current() ?: return
-        selectedFileIds.value = result.groups
-            .flatMap { g -> g.files.filter { it.id != g.keeperId } }
-            .map { it.id }.toSet()
+    /** Premium: mark every non-keeper in the groups currently shown (respects filter/search). */
+    fun selectAllVisible() {
+        val ids = state.value.groups.flatMap { ui -> ui.group.files.filter { it.id != ui.group.keeperId } }.map { it.id }
+        selectedFileIds.value = selectedFileIds.value + ids
     }
 
+    fun clearSelection() { selectedFileIds.value = emptySet() }
     fun setCategory(cat: FileCategory) { category.value = cat }
     fun setSort(mode: SortMode) { sort.value = mode }
-    fun toggleDirection() { ascending.value = !ascending.value }
     fun setSearchQuery(q: String) { query.value = q }
-    fun clearSelection() { selectedFileIds.value = emptySet() }
 
     fun groupById(id: Long): DuplicateGroup? = scanRepo.current()?.groups?.firstOrNull { it.id == id }
 
-    /** Files marked for deletion. */
+    /** Files that will be deleted. Always leaves at least one copy per group. */
     fun selectedFiles(): List<FileItem> {
         val result = scanRepo.current() ?: return emptyList()
-        val sel = selectedFileIds.value
-        return result.groups.flatMap { it.files }.filter { it.id in sel }
+        val doomed = deletable(result.groups, selectedFileIds.value)
+        val doomedIds = doomed.mapTo(HashSet()) { it.id }
+        // Results can be stale: if every unmarked copy of a group was already deleted
+        // outside the app, spare the best marked copy so one real file always survives.
+        // ponytail: File.exists() on the main thread, only for unmarked copies of marked groups.
+        val spared = HashSet<Long>()
+        for (g in result.groups) {
+            val marked = g.files.filter { it.id in doomedIds }
+            if (marked.isEmpty()) continue
+            val survivorExists = g.files.any { it.id !in doomedIds && File(it.path).exists() }
+            if (!survivorExists) spared += KeeperRanker.keeperId(marked)
+        }
+        return if (spared.isEmpty()) doomed else doomed.filterNot { it.id in spared }
     }
 
-    /** Files that will remain: everything not marked for deletion. */
+    /** The surviving copies of every group that has something marked for deletion. */
     fun keptFiles(): List<FileItem> {
         val result = scanRepo.current() ?: return emptyList()
-        val sel = selectedFileIds.value
-        return result.groups.flatMap { it.files }.filterNot { it.id in sel }
+        val doomed = selectedFiles().mapTo(HashSet()) { it.id }
+        return result.groups.filter { g -> g.files.any { it.id in doomed } }
+            .flatMap { g -> g.files.filterNot { it.id in doomed } }
+    }
+
+    /**
+     * The single enforcement point of the keep-one-copy invariant: whatever the
+     * selection says, a group that is fully marked keeps its keeper. Every count,
+     * the review screen and the delete service all read through here.
+     */
+    private fun deletable(groups: List<DuplicateGroup>, selected: Set<Long>): List<FileItem> =
+        groups.flatMap { g ->
+            val marked = g.files.filter { it.id in selected }
+            if (marked.size < g.files.size) marked else marked.filter { it.id != g.keeperId }
+        }
+
+    companion object {
+        fun keeperOf(g: DuplicateGroup): FileItem? = g.files.firstOrNull { it.id == g.keeperId }
     }
 }

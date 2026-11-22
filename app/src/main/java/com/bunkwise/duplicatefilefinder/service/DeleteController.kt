@@ -1,5 +1,6 @@
 package com.bunkwise.duplicatefilefinder.service
 
+import com.bunkwise.duplicatefilefinder.core.domain.error.AppError
 import com.bunkwise.duplicatefilefinder.core.domain.repository.DeletionOutcome
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,7 @@ sealed interface DeleteStatus {
     data object Idle : DeleteStatus
     data object Running : DeleteStatus
     data class Completed(val outcome: DeletionOutcome, val archived: Boolean) : DeleteStatus
-    data object Failed : DeleteStatus
+    data class Failed(val error: AppError.Delete) : DeleteStatus
 }
 
 /** Singleton bridge for the DeleteForegroundService, mirroring [ScanController]. */
@@ -45,9 +46,9 @@ class DeleteController {
         _status.value = DeleteStatus.Completed(outcome, archived)
     }
 
-    fun onFailed() {
+    fun onFailed(error: AppError.Delete) {
         isRunning = false
-        _status.value = DeleteStatus.Failed
+        _status.value = DeleteStatus.Failed(error)
     }
 
     fun reset() {

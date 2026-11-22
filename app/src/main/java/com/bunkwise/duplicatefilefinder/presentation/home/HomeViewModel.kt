@@ -3,18 +3,25 @@ package com.bunkwise.duplicatefilefinder.presentation.home
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bunkwise.duplicatefilefinder.core.data.QuotaRepositoryImpl
+import com.bunkwise.duplicatefilefinder.core.domain.model.BinEntry
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
 import com.bunkwise.duplicatefilefinder.core.domain.model.QuotaInfo
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanMode
+import com.bunkwise.duplicatefilefinder.core.domain.model.ScanResult
 import com.bunkwise.duplicatefilefinder.core.domain.model.StorageInfo
 import com.bunkwise.duplicatefilefinder.core.domain.repository.FileEnumerator
 import com.bunkwise.duplicatefilefinder.core.domain.repository.QuotaRepository
+import com.bunkwise.duplicatefilefinder.core.domain.repository.RecycleBinRepository
+import com.bunkwise.duplicatefilefinder.core.domain.repository.ScanResultRepository
 import com.bunkwise.duplicatefilefinder.core.domain.repository.StorageStatsProvider
 import com.bunkwise.duplicatefilefinder.core.domain.usecase.CheckScanQuotaUseCase
 import com.bunkwise.duplicatefilefinder.core.domain.usecase.QuotaDecision
 import com.bunkwise.duplicatefilefinder.presentation.common.Permissions
 import com.bunkwise.duplicatefilefinder.service.DeleteController
 import com.bunkwise.duplicatefilefinder.service.DeleteStatus
+import com.bunkwise.duplicatefilefinder.service.ScanController
+import com.bunkwise.duplicatefilefinder.service.ScanStatus
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +35,9 @@ class HomeViewModel(
     private val quota: QuotaRepository,
     private val enumerator: FileEnumerator,
     private val checkQuota: CheckScanQuotaUseCase,
+    scanResults: ScanResultRepository,
+    bin: RecycleBinRepository,
+    private val scanController: ScanController,
     deleteController: DeleteController
 ) : ViewModel() {
 
@@ -37,7 +47,12 @@ class HomeViewModel(
         val quota: QuotaInfo? = null,
         val sizeByCategory: Map<FileCategory, Long> = emptyMap(),
         val selectedMode: ScanMode = ScanMode.EXACT,
-        val selectedCategories: Set<FileCategory> = setOf(FileCategory.ALL)
+        /** Concrete types only (never ALL); all five selected means "everything". */
+        val selectedTypes: Set<FileCategory> = SCAN_TYPES.toSet(),
+        val lastResult: ScanResult? = null,
+        val bin: List<BinEntry> = emptyList(),
+        /** Percent of a scan running in the background, or null when idle. */
+        val runningPercent: Int? = null
     )
 
     sealed interface HomeEvent {
@@ -45,9 +60,10 @@ class HomeViewModel(
             val mode: ScanMode, val categories: Set<FileCategory>, val budget: Int
         ) : HomeEvent
         data object RequestStorageAccess : HomeEvent
-        data class ShowQuotaSheet(
+        data class ShowQuotaDialog(
             val estimate: Int, val remaining: Int, val mode: ScanMode, val categories: Set<FileCategory>
         ) : HomeEvent
+        data object ScanFailed : HomeEvent
     }
 
     private val _state = MutableStateFlow(HomeState())
@@ -56,18 +72,39 @@ class HomeViewModel(
     private val _events = Channel<HomeEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    /** When the category sizes were last computed; 0 = never / invalidated. */
-    private var sizesFetchedAt = 0L
+    /**
+     * A scan waiting for the notification-permission answer. Kept here, not in the
+     * fragment, so rotating the phone while the system dialog is open doesn't drop it.
+     */
+    var pendingScan: HomeEvent.NavigateToScan? = null
 
     init {
-        // A completed deletion batch is the one event that materially changes the
-        // category sizes, so it invalidates the cache; the next refresh() recomputes.
+        viewModelScope.launch { scanResults.observe().collect { r -> _state.update { it.copy(lastResult = r) } } }
+        viewModelScope.launch { bin.observe().collect { b -> _state.update { it.copy(bin = b) } } }
+        viewModelScope.launch {
+            scanController.progress.collect { p ->
+                if (scanController.isRunning) _state.update { it.copy(runningPercent = p.percent) }
+            }
+        }
+        viewModelScope.launch {
+            scanController.status.collect { status ->
+                when (status) {
+                    is ScanStatus.Running -> _state.update { it.copy(runningPercent = it.runningPercent ?: 0) }
+                    is ScanStatus.Failed -> {
+                        // Don't reset() here: if the Scan screen is open it must still see
+                        // Failed, or it spins forever. It consumes the status itself.
+                        _state.update { it.copy(runningPercent = null) }
+                        _events.send(HomeEvent.ScanFailed)
+                    }
+                    else -> _state.update { it.copy(runningPercent = null) }
+                }
+            }
+        }
+        // Deleting files changes the type sizes; the delete service already
+        // invalidated the enumerator's cache, so just re-read it.
         viewModelScope.launch {
             deleteController.status.collect { status ->
-                if (status is DeleteStatus.Completed) {
-                    sizesFetchedAt = 0L
-                    if (_state.value.hasPermission) refreshSizes()
-                }
+                if (status is DeleteStatus.Completed && _state.value.hasPermission) refreshSizes()
             }
         }
     }
@@ -77,38 +114,24 @@ class HomeViewModel(
         _state.update { it.copy(hasPermission = granted) }
         viewModelScope.launch {
             _state.update { it.copy(storage = storage.current(), quota = quota.current()) }
-            // sizeByCategory sweeps all of MediaStore — far too heavy for every
-            // onResume, so serve the cached values until they expire or a deletion
-            // invalidates them.
-            val stale = System.currentTimeMillis() - sizesFetchedAt > SIZES_TTL_MS
-            if (granted && (stale || _state.value.sizeByCategory.isEmpty())) refreshSizes()
+            // Cheap on every visit: the enumerator only re-walks MediaStore when the
+            // media library actually changed since the last computation.
+            if (granted) refreshSizes()
         }
     }
 
     private suspend fun refreshSizes() {
-        // On failure keep the previous values — flashing back to 0 B is worse
-        // than briefly showing slightly outdated sizes.
+        // On failure keep the previous values; flashing back to 0 B is worse than
+        // briefly showing slightly outdated sizes.
         runCatching { enumerator.sizeByCategory() }.getOrNull()?.let { sizes ->
-            sizesFetchedAt = System.currentTimeMillis()
             _state.update { it.copy(sizeByCategory = sizes) }
         }
     }
 
-    fun onModeSelected(index: Int) {
-        val mode = ScanMode.entries.getOrNull(index) ?: ScanMode.EXACT
-        _state.update { it.copy(selectedMode = mode) }
-    }
+    fun onModeSelected(mode: ScanMode) = _state.update { it.copy(selectedMode = mode) }
 
-    fun onCategoryToggled(category: FileCategory) {
-        _state.update { s ->
-            val current = s.selectedCategories
-            val next = when {
-                category == FileCategory.ALL -> setOf(FileCategory.ALL)
-                current.contains(category) -> (current - category).ifEmpty { setOf(FileCategory.ALL) }
-                else -> (current - FileCategory.ALL + category)
-            }
-            s.copy(selectedCategories = next)
-        }
+    fun onTypeToggled(type: FileCategory, checked: Boolean) = _state.update { s ->
+        s.copy(selectedTypes = if (checked) s.selectedTypes + type else s.selectedTypes - type)
     }
 
     fun onGrantAccess() {
@@ -121,46 +144,44 @@ class HomeViewModel(
             return
         }
         val s = _state.value
+        if (s.selectedTypes.isEmpty()) return
+        val categories = if (s.selectedTypes.size == SCAN_TYPES.size) setOf(FileCategory.ALL) else s.selectedTypes
         viewModelScope.launch {
-            when (val decision = checkQuota(s.selectedCategories)) {
+            when (val decision = checkQuota(categories)) {
                 is QuotaDecision.Allowed -> {
                     val q = quota.current()
                     val budget = if (q.isPremium) Int.MAX_VALUE else q.remaining.coerceAtLeast(1)
-                    _events.send(HomeEvent.NavigateToScan(s.selectedMode, s.selectedCategories, budget))
+                    _events.send(HomeEvent.NavigateToScan(s.selectedMode, categories, budget))
                 }
                 is QuotaDecision.Exceeds -> _events.send(
-                    HomeEvent.ShowQuotaSheet(decision.estimate, decision.remaining, s.selectedMode, s.selectedCategories)
+                    HomeEvent.ShowQuotaDialog(decision.estimate, decision.remaining, s.selectedMode, categories)
                 )
             }
         }
     }
 
-    /** Called from the quota sheet: scan only within the remaining free limit. */
+    /** From the quota dialog: scan only as many files as are left today. */
     fun scanWithinLimit(mode: ScanMode, categories: Set<FileCategory>, remaining: Int) {
-        viewModelScope.launch {
-            _events.send(HomeEvent.NavigateToScan(mode, categories, remaining.coerceAtLeast(1)))
-        }
+        if (remaining <= 0) return
+        viewModelScope.launch { _events.send(HomeEvent.NavigateToScan(mode, categories, remaining)) }
     }
 
-    /**
-     * Rewarded-ad reward earned: top up the daily allowance by [AD_BONUS_FILES]
-     * (written synchronously, OTHER §7) then re-run the pre-scan quota check —
-     * if the boost is enough the scan runs in full, otherwise the sheet reappears.
-     */
+    /** Rewarded ad watched: add the bonus, then re-run the quota check. */
     fun onAdReward() {
         viewModelScope.launch {
-            quota.addBonus(AD_BONUS_FILES)
+            quota.addBonus(QuotaRepositoryImpl.AD_BONUS)
             _state.update { it.copy(quota = quota.current()) }
             onStartScan()
         }
     }
 
-    private companion object {
-        // Matches QuotaRepositoryImpl.AD_BONUS; kept here to avoid a data-layer import.
-        const val AD_BONUS_FILES = 500
-        /** Category sizes drift slowly; a minute of staleness is invisible on Home. */
-        const val SIZES_TTL_MS = 60_000L
-    }
-
     fun hasStoragePermission(): Boolean = Permissions.hasStorageAccess(appContext)
+
+    companion object {
+        /** The file types offered on the Scan tab, in display order. */
+        val SCAN_TYPES = listOf(
+            FileCategory.IMAGES, FileCategory.VIDEOS, FileCategory.AUDIO,
+            FileCategory.DOCUMENTS, FileCategory.OTHER
+        )
+    }
 }

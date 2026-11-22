@@ -57,3 +57,11 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Skills (mandatory, automatic)
+- At the start of every task, invoke the `using-superpowers` skill and follow it: brainstorming before new features, systematic-debugging before bug fixes, writing-plans/executing-plans for multi-step work, verification-before-completion before claiming done.
+- For any codebase question, use the `graphify` skill / `graphify query` first (see graphify section above), and run `graphify update .` after code changes.
+- Use other matching skills (e.g. `anthropic-skills:android-*`, `code-review`, `security-review`) whenever relevant without being asked.
+
+## Design rules (mandatory)
+Every UI/copy/animation change must follow `DESIGN_RULES.md` (restraint, no AI-generic look: no gradients/glow/sparkles, few cards, one accent color, direct copy, 48dp targets). Open issues and planned fixes are tracked in `AUDIT_REPORT.md`.

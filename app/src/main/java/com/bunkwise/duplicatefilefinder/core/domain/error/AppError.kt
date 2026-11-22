@@ -7,25 +7,17 @@ package com.bunkwise.duplicatefilefinder.core.domain.error
 sealed interface AppError {
 
     enum class Scan : AppError {
-        PERMISSION_LOST,
-        STORAGE_UNAVAILABLE,
-        QUOTA_EXCEEDED,
-        CANCELLED,
         UNKNOWN
     }
 
     enum class Delete : AppError {
         FILE_CHANGED,
-        FILE_IN_USE,
         PERMISSION_DENIED,
+        /** Not enough free space to write the bin copy / archive. */
         BIN_FULL,
         TARGET_MISSING,
-        UNKNOWN
-    }
-
-    enum class Local : AppError {
-        DISK_FULL,
-        DB_ERROR,
+        /** Archive mode is on but no (still accessible) destination folder is set. */
+        ARCHIVE_FOLDER_MISSING,
         UNKNOWN
     }
 }

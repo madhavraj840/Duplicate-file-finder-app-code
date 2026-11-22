@@ -100,52 +100,85 @@ class FileEnumeratorImpl(
         return hash
     }
 
-    override suspend fun estimateCount(categories: Set<FileCategory>): Int = withContext(Dispatchers.IO) {
-        val want = expand(categories)
-        val scope = currentScope()
-        var total = 0
-        if (FileCategory.IMAGES in want) total += countFiltered(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, scope)
-        if (FileCategory.VIDEOS in want) total += countFiltered(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, scope)
-        if (FileCategory.AUDIO in want) total += countFiltered(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, scope)
-        if (FileCategory.DOCUMENTS in want || FileCategory.OTHER in want) {
-            total += countFilesFiltered(want, scope)
-        }
-        total
+    /** Per-category totals from one MediaStore pass, shared by Home sizes and the quota estimate. */
+    private data class Stats(val sizes: Map<FileCategory, Long>, val counts: Map<FileCategory, Int>)
+
+    /** What a cached [Stats] was computed against; any change means it is stale. */
+    private data class StatsKey(val scope: Scope, val generation: Long)
+
+    @Volatile private var cached: Pair<StatsKey, Stats>? = null
+    @Volatile private var cachedAtMs = 0L
+
+    override fun invalidateSizes() { cached = null }
+
+    override suspend fun estimateCount(categories: Set<FileCategory>): Int {
+        val counts = stats().counts
+        return expand(categories).sumOf { counts[it] ?: 0 }
     }
 
-    override suspend fun sizeByCategory(): Map<FileCategory, Long> = withContext(Dispatchers.IO) {
-        val result = linkedMapOf(
+    override suspend fun sizeByCategory(): Map<FileCategory, Long> = stats().sizes
+
+    /**
+     * Returns cached totals unless the media library changed. On API 30+ MediaStore's
+     * generation counter tells us that for free, so returning to Home costs one tiny
+     * call instead of walking every row. Older devices fall back to a short TTL; our
+     * own scans/deletes invalidate explicitly either way.
+     */
+    private suspend fun stats(): Stats = withContext(Dispatchers.IO) {
+        val key = StatsKey(currentScope(), mediaGeneration())
+        val hit = cached
+        if (hit != null) {
+            val fresh = if (key.generation >= 0) hit.first == key
+            else hit.first.scope == key.scope && System.currentTimeMillis() - cachedAtMs < LEGACY_TTL_MS
+            if (fresh) return@withContext hit.second
+        }
+        val computed = computeStats(key.scope)
+        cached = key to computed
+        cachedAtMs = System.currentTimeMillis()
+        computed
+    }
+
+    private fun mediaGeneration(): Long =
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            runCatching { MediaStore.getGeneration(context, MediaStore.VOLUME_EXTERNAL) }.getOrDefault(-1L)
+        } else -1L
+
+    /** ONE pass over MediaStore.Files, classified by MEDIA_TYPE (was four queries). */
+    private fun computeStats(scope: Scope): Stats {
+        val sizes = linkedMapOf(
             FileCategory.IMAGES to 0L, FileCategory.VIDEOS to 0L,
             FileCategory.DOCUMENTS to 0L, FileCategory.AUDIO to 0L, FileCategory.OTHER to 0L
         )
-        val scope = currentScope()
-        result[FileCategory.IMAGES] = sumSize(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, scope)
-        result[FileCategory.VIDEOS] = sumSize(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, scope)
-        result[FileCategory.AUDIO] = sumSize(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, scope)
-        // Documents + other from Files, split by mime.
-        val filesUri = MediaStore.Files.getContentUri("external")
+        val counts = HashMap<FileCategory, Int>()
         val projection = arrayOf(
             MediaStore.Files.FileColumns.SIZE,
             MediaStore.Files.FileColumns.MIME_TYPE,
-            MediaStore.Files.FileColumns.DATA
+            MediaStore.Files.FileColumns.DATA,
+            MediaStore.Files.FileColumns.MEDIA_TYPE
         )
-        resolver.query(filesUri, projection, null, null, null)?.use { c ->
+        resolver.query(MediaStore.Files.getContentUri("external"), projection, null, null, null)?.use { c ->
             val sizeCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE)
             val mimeCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE)
             val dataCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
+            val typeCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
             while (c.moveToNext()) {
                 val path = c.getStringOrNull(dataCol) ?: continue
                 if (isExcluded(path) || !scope.accepts(path)) continue
                 val size = c.getLong(sizeCol)
                 if (size < minSize) continue
-                when (categoryOf(c.getStringOrNull(mimeCol), path)) {
-                    FileCategory.DOCUMENTS -> result[FileCategory.DOCUMENTS] = result[FileCategory.DOCUMENTS]!! + size
-                    FileCategory.OTHER -> result[FileCategory.OTHER] = result[FileCategory.OTHER]!! + size
-                    else -> {} // already counted via typed collections
+                val cat = when (c.getInt(typeCol)) {
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE -> FileCategory.IMAGES
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO -> FileCategory.VIDEOS
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO -> FileCategory.AUDIO
+                    // Same rule as enumeration: untyped rows only count as docs/other.
+                    else -> categoryOf(c.getStringOrNull(mimeCol), path)
+                        .takeIf { it == FileCategory.DOCUMENTS || it == FileCategory.OTHER } ?: continue
                 }
+                sizes[cat] = sizes.getValue(cat) + size
+                counts[cat] = (counts[cat] ?: 0) + 1
             }
         }
-        result
+        return Stats(sizes, counts)
     }
 
     // ---- helpers ----
@@ -246,67 +279,6 @@ class FileEnumeratorImpl(
         }
     }
 
-    /**
-     * Counts rows through the same scope/exclusion/min-size filters as [enumerate],
-     * so the pre-scan quota estimate matches what a scan would actually visit
-     * (a raw COUNT(*) ignores the user's scan/exclude folders).
-     */
-    private fun countFiltered(uri: Uri, scope: Scope): Int {
-        var total = 0
-        resolver.query(uri, arrayOf(MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns.DATA), null, null, null)
-            ?.use { c ->
-                val sizeCol = c.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
-                val dataCol = c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
-                while (c.moveToNext()) {
-                    val path = c.getStringOrNull(dataCol) ?: continue
-                    if (isExcluded(path) || !scope.accepts(path)) continue
-                    if (c.getLong(sizeCol) < minSize) continue
-                    total++
-                }
-            }
-        return total
-    }
-
-    /** Like [countFiltered] for MediaStore.Files, keeping only DOCUMENTS/OTHER rows in [want]. */
-    private fun countFilesFiltered(want: Set<FileCategory>, scope: Scope): Int {
-        var total = 0
-        val uri = MediaStore.Files.getContentUri("external")
-        val projection = arrayOf(
-            MediaStore.Files.FileColumns.SIZE,
-            MediaStore.Files.FileColumns.DATA,
-            MediaStore.Files.FileColumns.MIME_TYPE
-        )
-        resolver.query(uri, projection, null, null, null)?.use { c ->
-            val sizeCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE)
-            val dataCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
-            val mimeCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE)
-            while (c.moveToNext()) {
-                val path = c.getStringOrNull(dataCol) ?: continue
-                if (isExcluded(path) || !scope.accepts(path)) continue
-                if (c.getLong(sizeCol) < minSize) continue
-                val cat = categoryOf(c.getStringOrNull(mimeCol), path)
-                if (cat != FileCategory.DOCUMENTS && cat != FileCategory.OTHER) continue
-                if (cat in want) total++
-            }
-        }
-        return total
-    }
-
-    private fun sumSize(uri: Uri, scope: Scope): Long {
-        var total = 0L
-        resolver.query(uri, arrayOf(MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns.DATA), null, null, null)
-            ?.use { c ->
-                val sizeCol = c.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
-                val dataCol = c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
-                while (c.moveToNext()) {
-                    val path = c.getStringOrNull(dataCol) ?: continue
-                    if (isExcluded(path) || !scope.accepts(path)) continue
-                    total += c.getLong(sizeCol)
-                }
-            }
-        return total
-    }
-
     private fun isExcluded(path: String): Boolean =
         excludedFragments.any { path.contains(it, ignoreCase = true) }
 
@@ -344,5 +316,8 @@ class FileEnumeratorImpl(
          * which is what makes repeated scans reproducible.
          */
         val SCAN_ORDER = "${MediaStore.MediaColumns._ID} DESC"
+
+        /** Pre-API-30 devices have no generation counter; recompute at most this often. */
+        const val LEGACY_TTL_MS = 5 * 60_000L
     }
 }

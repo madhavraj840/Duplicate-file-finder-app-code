@@ -14,10 +14,8 @@ val Context.appDataStore: DataStore<Preferences> by preferencesDataStore(name = 
 
 object PrefKeys {
     // flags / settings
-    val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
     val IS_PREMIUM = booleanPreferencesKey("is_premium")
     val ARCHIVE_MODE = booleanPreferencesKey("archive_mode")
-    val AUTO_CLEANUP = booleanPreferencesKey("auto_cleanup")
     val LANGUAGE = stringPreferencesKey("language_tag")
 
     // premium scan scope + schedule

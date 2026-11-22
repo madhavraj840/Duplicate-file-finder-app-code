@@ -27,9 +27,6 @@ data class ImageHashes(
  */
 class ImageFeatureExtractor {
 
-    /** Computes the 64-bit dHash for the image at [path], or null on failure. */
-    fun dHash(path: String): Long? = hashes(path)?.dHash
-
     /**
      * Computes both perceptual hashes, or null when the image can't be decoded or
      * is too low-contrast to fingerprint reliably (see [MIN_STD_DEV]).

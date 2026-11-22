@@ -1,6 +1,5 @@
 package com.bunkwise.duplicatefilefinder.core.engine.algo;
 
-import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +24,9 @@ public final class StreamingHasher {
 
     /** Streams the whole file. Returns hex SHA-256, or null on error/cancel. */
     public String hash(String path, Canceller canceller) {
-        try (InputStream in = new BufferedInputStream(new FileInputStream(path), BUFFER)) {
+        // Reads straight into the pooled 1 MB buffer; a BufferedInputStream would allocate
+        // another 1 MB per file for no gain.
+        try (InputStream in = new FileInputStream(path)) {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             int r;
             long sinceCheck = 0;
