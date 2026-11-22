@@ -1,5 +1,7 @@
 package com.bunkwise.duplicatefilefinder.core.data
 
+import com.bunkwise.duplicatefilefinder.ads.ProFeature
+import com.bunkwise.duplicatefilefinder.ads.Unlocks
 import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
@@ -48,7 +50,10 @@ class FileEnumeratorImpl(
     private suspend fun currentScope(): Scope {
         val s = settings.current()
         fun norm(p: String) = p.trimEnd('/').lowercase()
-        return Scope(s.scanFolders.map(::norm), s.excludeFolders.map(::norm))
+        // An ad unlock that ran out stops applying the folders it set.
+        val include = if (Unlocks.unlocked(s.isPremium, ProFeature.SCAN_FOLDER)) s.scanFolders else emptySet()
+        val exclude = if (Unlocks.unlocked(s.isPremium, ProFeature.EXCLUDE)) s.excludeFolders else emptySet()
+        return Scope(include.map(::norm), exclude.map(::norm))
     }
 
     override fun enumerate(categories: Set<FileCategory>, budget: Int): Flow<FileItem> = flow {

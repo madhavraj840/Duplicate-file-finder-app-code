@@ -1,11 +1,14 @@
 package com.bunkwise.duplicatefilefinder.core.data
 
+import com.bunkwise.duplicatefilefinder.ads.ProFeature
+import com.bunkwise.duplicatefilefinder.ads.Unlocks
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import com.bunkwise.duplicatefilefinder.core.domain.model.QuotaInfo
 import com.bunkwise.duplicatefilefinder.core.domain.repository.QuotaRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -20,14 +23,15 @@ class QuotaRepositoryImpl(
     private val context: Context
 ) : QuotaRepository {
 
-    override fun observe(): Flow<QuotaInfo> = context.appDataStore.data.map { p ->
+    override fun observe(): Flow<QuotaInfo> = context.appDataStore.data.combine(Unlocks.version) { p, _ -> p }.map { p ->
         val today = todayString()
         val sameDay = p[PrefKeys.QUOTA_DATE] == today
         QuotaInfo(
             limit = DAILY_LIMIT,
             used = if (sameDay) (p[PrefKeys.FILES_USED] ?: 0) else 0,
             bonus = if (sameDay) (p[PrefKeys.BONUS_FILES] ?: 0) else 0,
-            isPremium = p[PrefKeys.IS_PREMIUM] ?: false
+            // The 3-ad pass lifts the daily limit too.
+            isPremium = (p[PrefKeys.IS_PREMIUM] ?: false) || Unlocks.passActive()
         )
     }
 

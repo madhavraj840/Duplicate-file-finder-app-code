@@ -17,7 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bunkwise.duplicatefilefinder.ui.composeScreen
+import com.bunkwise.duplicatefilefinder.ui.Tab
+import com.bunkwise.duplicatefilefinder.ui.tabScreen
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -58,7 +59,7 @@ class HomeFragment : Fragment() {
         }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        composeScreen {
+        tabScreen(Tab.HOME) {
             val state by viewModel.state.collectAsStateWithLifecycle()
             HomeScreen(
                 state = state,
@@ -173,8 +174,6 @@ class HomeFragment : Fragment() {
 
     private fun showQuotaDialog(event: HomeViewModel.HomeEvent.ShowQuotaDialog) {
         val q = viewModel.state.value.quota
-        // Consent + ad SDK start only now, when an ad is actually on offer.
-        requireContext().appContainer.rewardedAds.preload(requireActivity())
         val builder = MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.quota_title)
             .setMessage(
@@ -185,7 +184,8 @@ class HomeFragment : Fragment() {
                     Formatters.count(event.remaining)
                 )
             )
-            .setNeutralButton(R.string.quota_watch_ad) { _, _ -> showRewardedAd() }
+            // The ad loads only now, on the tap.
+            .setNeutralButton(R.string.quota_watch_ad) { _, _ -> (activity as? MainActivity)?.watchAd(null) { viewModel.onAdReward() } }
             .setNegativeButton(R.string.cancel, null)
         if (event.remaining > 0) {
             builder.setPositiveButton(getString(R.string.quota_scan_within, Formatters.count(event.remaining))) { _, _ ->
@@ -195,23 +195,6 @@ class HomeFragment : Fragment() {
             builder.setPositiveButton(R.string.quota_premium) { _, _ -> findNavController().navigate(R.id.premiumFragment) }
         }
         builder.show()
-    }
-
-    private fun showRewardedAd() {
-        val ads = requireContext().appContainer.rewardedAds
-        if (!ads.isReady) {
-            Toast.makeText(requireContext(), R.string.ad_not_ready, Toast.LENGTH_SHORT).show()
-            ads.preload(requireActivity())
-            return
-        }
-        ads.show(
-            requireActivity(),
-            onReward = { viewModel.onAdReward() },
-            onUnavailable = {
-                // The fragment may be gone by the time the ad closes.
-                context?.let { Toast.makeText(it, R.string.ad_not_ready, Toast.LENGTH_SHORT).show() }
-            }
-        )
     }
 
     private companion object {

@@ -3,117 +3,121 @@ package com.bunkwise.duplicatefilefinder.ads
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import com.bunkwise.duplicatefilefinder.R
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
-import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
 
 /**
- * Owns the single rewarded-interstitial ad used to boost the daily file limit
- * (+500 files per completed view).
- *
- * Nothing ad-related runs at app start: the SDK is initialised the first time the
- * quota sheet asks for an ad, and only after the UMP consent flow (GDPR) says ads
- * may be requested. Users who never hit the limit, and all premium users, never
- * load the ads SDK, which saves network, memory and battery. All AdMob objects are
- * touched on the main thread.
+ * The rewarded ad behind every "Watch ad" (Night Mode's model). Nothing is loaded ahead of time:
+ * the tap asks for consent (UMP, first time only), starts the SDK, loads one ad and plays it the
+ * moment it arrives - a preloaded ad was a request that usually never became an impression. A tap
+ * waits at most [PENDING_MS] for its ad, and only plays while the app is in front ([onResume]
+ * catches one that loaded while the user was away). All calls on the main thread.
  */
 class RewardedAdManager(private val appContext: Context) {
 
-    private var ad: RewardedInterstitialAd? = null
+    private var ad: RewardedAd? = null
+    private var loadedAt = 0L
     private var loading = false
     private var sdkReady = false
 
-    /** True when an ad is loaded and ready to [show] immediately. */
-    val isReady: Boolean get() = ad != null
+    private var pending: Pair<Activity, () -> Unit>? = null
+    private var pendingAt = 0L
 
-    /** Runs consent + SDK init once, then loads an ad if none is loaded or in flight. */
-    fun preload(activity: Activity) {
-        if (ad != null || loading) return
-        ensureSdk(activity) { load() }
-    }
-
-    private fun ensureSdk(activity: Activity, then: () -> Unit) {
-        if (sdkReady) { then(); return }
-        val consent = UserMessagingPlatform.getConsentInformation(appContext)
-        val initIfAllowed = {
-            if (consent.canRequestAds() && !sdkReady) {
-                sdkReady = true
-                MobileAds.initialize(appContext) { then() }
-            }
-        }
-        consent.requestConsentInfoUpdate(
-            activity, ConsentRequestParameters.Builder().build(),
-            { UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { initIfAllowed() } },
-            { error ->
-                Log.w(TAG, "Consent info update failed: ${error.message}")
-                initIfAllowed() // consent from an earlier session may still allow ads
-            }
-        )
-    }
-
-    private fun load() {
-        if (ad != null || loading) return
-        loading = true
-        RewardedInterstitialAd.load(
-            appContext, TEST_AD_UNIT_ID, AdRequest.Builder().build(),
-            object : RewardedInterstitialAdLoadCallback() {
-                override fun onAdLoaded(loaded: RewardedInterstitialAd) {
-                    ad = loaded
-                    loading = false
-                }
-
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    ad = null
-                    loading = false
-                    Log.w(TAG, "Rewarded ad failed to load: ${error.message}")
-                }
-            }
-        )
-    }
-
-    /**
-     * Shows the preloaded ad. [onReward] fires once, after the ad is dismissed, only
-     * if the user actually earned the reward. If no ad is ready (or it fails to show),
-     * [onUnavailable] fires instead and a fresh load is kicked off. Must be called
-     * from the main thread with a resumed [activity].
-     */
-    fun show(activity: Activity, onReward: () -> Unit, onUnavailable: () -> Unit) {
+    /** Plays a rewarded ad; [onReward] fires after it closes, only if it was watched through. */
+    fun show(activity: Activity, onReward: () -> Unit) {
+        if (System.currentTimeMillis() - loadedAt > AD_FRESH_MS) ad = null // expired after an hour
         val current = ad
         if (current == null) {
-            preload(activity)
-            onUnavailable()
+            pending = activity to onReward
+            pendingAt = System.currentTimeMillis()
+            Toast.makeText(activity, R.string.unlock_ad_loading, Toast.LENGTH_SHORT).show()
+            ensureSdk(activity) { load() }
             return
         }
-        // Consume this ad; a new one is loaded when the full-screen content ends.
         ad = null
         var earned = false
         current.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() {
-                load()
-                if (earned) onReward()
-            }
-
+            // No reload: the next tap loads its own.
+            override fun onAdDismissedFullScreenContent() { if (earned) onReward() }
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                load()
-                onUnavailable()
+                Toast.makeText(activity, R.string.unlock_no_ad, Toast.LENGTH_LONG).show()
             }
         }
         current.show(activity) { earned = true }
     }
 
+    /** MainActivity.onResume: an ad tapped for that loaded while the app was in the background plays now. */
+    fun onResume(activity: Activity) {
+        pending?.let { pending = activity to it.second; playPending(inFront = true) }
+    }
+
+    private fun ensureSdk(activity: Activity, then: () -> Unit) {
+        if (sdkReady) { then(); return }
+        val consent = UserMessagingPlatform.getConsentInformation(appContext)
+        val start = {
+            if (consent.canRequestAds()) {
+                if (!sdkReady) { sdkReady = true; MobileAds.initialize(appContext) { then() } }
+            } else failPending()
+        }
+        consent.requestConsentInfoUpdate(
+            activity, ConsentRequestParameters.Builder().build(),
+            { UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { start() } },
+            { error -> Log.w(TAG, "Consent update failed: ${error.message}"); start() },
+        )
+    }
+
+    private fun load() {
+        if (ad != null) { playPending(); return }
+        if (loading) return
+        loading = true
+        RewardedAd.load(appContext, TEST_AD_UNIT_ID, AdRequest.Builder().build(), object : RewardedAdLoadCallback() {
+            override fun onAdLoaded(loaded: RewardedAd) {
+                ad = loaded
+                loadedAt = System.currentTimeMillis()
+                loading = false
+                playPending()
+            }
+
+            override fun onAdFailedToLoad(error: LoadAdError) {
+                loading = false
+                Log.w(TAG, "Rewarded ad failed to load: ${error.message}")
+                failPending()
+            }
+        })
+    }
+
+    private fun failPending() {
+        val (activity, _) = pending ?: return
+        pending = null
+        Toast.makeText(activity, R.string.unlock_no_ad, Toast.LENGTH_LONG).show()
+    }
+
+    private fun playPending(inFront: Boolean = false) {
+        val (activity, onReward) = pending ?: return
+        if (System.currentTimeMillis() - pendingAt > PENDING_MS) { pending = null; return }
+        val front = inFront || (activity as? LifecycleOwner)?.lifecycle?.currentState?.isAtLeast(Lifecycle.State.RESUMED) == true
+        if (ad == null || !front || activity.isFinishing) return
+        pending = null
+        show(activity, onReward)
+    }
+
     companion object {
         private const val TAG = "RewardedAdManager"
+        private const val PENDING_MS = 60_000L
+        private const val AD_FRESH_MS = 55 * 60_000L
 
-        /**
-         * Google's public TEST rewarded-interstitial ad unit. Replace with the real
-         * ad unit id (and the real app id in AndroidManifest.xml) before release.
-         */
-        private const val TEST_AD_UNIT_ID = "ca-app-pub-3940256099942544/5354046379"
+        /** Google's public TEST rewarded unit. Swap for the real one (and the app id in the manifest) before release. */
+        private const val TEST_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
     }
 }

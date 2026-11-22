@@ -228,6 +228,17 @@ fun IconBox(icon: ImageVector, modifier: Modifier = Modifier, active: Boolean = 
     }
 }
 
+/** A coloured glyph on a soft square of the same colour - the settings-list icon. */
+@Composable
+fun TintedIcon(icon: ImageVector, tint: Color, modifier: Modifier = Modifier, size: Dp = 36.dp) {
+    Box(
+        modifier = modifier.size(size).clip(RoundedCornerShape(size * 0.3f)).background(tint.copy(alpha = 0.16f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(size * 0.56f))
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Rows
 // ─────────────────────────────────────────────────────────────────────────────
@@ -244,6 +255,7 @@ fun ListRow(
     value: String? = null,
     pro: Boolean = false,
     icon: ImageVector? = null,
+    iconTint: Color? = null,
     labelColor: Color = Df.c.tx,
     valueColor: Color = Df.c.mu,
     leading: (@Composable () -> Unit)? = null,
@@ -260,7 +272,10 @@ fun ListRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        if (icon != null) Icon(icon, null, tint = n.mu, modifier = Modifier.size(IconSize))
+        when {
+            icon != null && iconTint != null -> TintedIcon(icon, iconTint)
+            icon != null -> Icon(icon, null, tint = n.mu, modifier = Modifier.size(IconSize))
+        }
         leading?.invoke()
         // weight(1f): an unweighted label is handed every pixel it asks for, which squeezed the
         // trailing control to nothing on a narrow screen or at a raised font scale.
@@ -671,7 +686,7 @@ fun ProBadge(isPremium: Boolean, modifier: Modifier = Modifier) {
 /** Dark text on [StarYellow] - the lock chip colours. */
 val AdInk = Color(0xFF1C1604)
 
-/** Stands in for a switch the user can't flip yet: "Premium" - the tap opens the Premium screen. */
+/** Stands in for a control the user can't use yet: "Watch ad" - the tap plays the ad straight away (12-hour unlock). */
 @Composable
 fun LockChip(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
@@ -679,13 +694,13 @@ fun LockChip(onClick: () -> Unit, modifier: Modifier = Modifier) {
             .height(36.dp)
             .clip(Radius.pill)
             .background(StarYellow)
-            .clickable(onClickLabel = stringResource(R.string.premium), onClick = onClick)
+            .clickable(onClickLabel = stringResource(R.string.chip_watch_ad), onClick = onClick)
             .padding(start = 12.dp, end = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(AppIcons.Pro, null, tint = AdInk, modifier = Modifier.size(18.dp))
+        Icon(AppIcons.Play, null, tint = AdInk, modifier = Modifier.size(18.dp))
         Spacer(modifier = Modifier.size(4.dp))
-        Text(stringResource(R.string.premium), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = AdInk, maxLines = 1)
+        Text(stringResource(R.string.chip_watch_ad), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = AdInk, maxLines = 1)
     }
 }
 

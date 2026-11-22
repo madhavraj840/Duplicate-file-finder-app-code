@@ -14,8 +14,10 @@ import com.bunkwise.duplicatefilefinder.MainActivity
 import com.bunkwise.duplicatefilefinder.R
 import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.presentation.shared.SharedSelectionViewModel
-import com.bunkwise.duplicatefilefinder.ui.composeScreen
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.bunkwise.duplicatefilefinder.ui.Tab
+import com.bunkwise.duplicatefilefinder.ui.tabScreen
+import com.bunkwise.duplicatefilefinder.ads.ProFeature
+import com.bunkwise.duplicatefilefinder.ads.Unlocks
 
 /** The Duplicates tab: the last scan's groups, selection and the path to Review. */
 class CleanupFragment : Fragment() {
@@ -25,7 +27,7 @@ class CleanupFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        composeScreen {
+        tabScreen(Tab.CLEANUP) {
             val state by selection.state.collectAsStateWithLifecycle()
             CleanupScreen(
                 state = state,
@@ -47,13 +49,8 @@ class CleanupFragment : Fragment() {
         val state = selection.state.value
         when {
             state.markedFiles > 0 -> selection.clearSelection()
-            state.isPremium -> selection.selectAllVisible()
-            else -> MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.premium_f_select_all)
-                .setMessage(R.string.premium_select_all_body)
-                .setPositiveButton(R.string.see_premium) { _, _ -> findNavController().navigate(R.id.premiumFragment) }
-                .setNegativeButton(R.string.cancel, null)
-                .show()
+            Unlocks.unlocked(state.isPremium, ProFeature.SELECT_ALL) -> selection.selectAllVisible()
+            else -> (activity as? MainActivity)?.requestUnlock(ProFeature.SELECT_ALL)
         }
     }
 

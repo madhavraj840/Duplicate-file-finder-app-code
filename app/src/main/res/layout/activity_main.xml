@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The NavHost fills the screen; the Compose nav capsule floats over its bottom edge.
-     Tab-root screens leave BottomNavClearance at the bottom so nothing hides under it. -->
+<!-- The NavHost fills the screen. Tab roots draw the nav capsule inside their own Compose tree
+     (so the page blurs through it); overlayCompose only hosts app-wide sheets. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
@@ -18,7 +18,7 @@
         app:navGraph="@navigation/nav_main" />
 
     <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/bottomNavCompose"
+        android:id="@+id/overlayCompose"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom" />

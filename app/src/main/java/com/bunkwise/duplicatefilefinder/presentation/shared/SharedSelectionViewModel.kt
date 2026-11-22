@@ -1,5 +1,7 @@
 package com.bunkwise.duplicatefilefinder.presentation.shared
 
+import com.bunkwise.duplicatefilefinder.ads.ProFeature
+import com.bunkwise.duplicatefilefinder.ads.Unlocks
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bunkwise.duplicatefilefinder.core.domain.model.DuplicateGroup
@@ -86,7 +88,7 @@ class SharedSelectionViewModel(
 
     val state: StateFlow<CleanupState> = run {
         val filters = combine(category, sort, query) { c, s, q -> Filters(c, s, q) }
-        combine(scanRepo.observe(), selectedFileIds, filters, settings.settings) { result, selected, f, set ->
+        combine(scanRepo.observe(), selectedFileIds, filters, settings.settings, Unlocks.version) { result, selected, f, set, _ ->
             if (result == null) return@combine CleanupState(isPremium = set.isPremium)
             val all = result.groups
             val visible = filterAndSort(all, f)
@@ -101,7 +103,7 @@ class SharedSelectionViewModel(
                 sort = f.sort,
                 query = f.query,
                 // Archiving is premium; a lapsed premium falls back to the recycle bin.
-                archiveMode = set.isPremium && set.archiveMode,
+                archiveMode = Unlocks.unlocked(set.isPremium, ProFeature.ARCHIVE) && set.archiveMode,
                 archiveTreeUri = set.archiveTreeUri,
                 isPremium = set.isPremium
             )

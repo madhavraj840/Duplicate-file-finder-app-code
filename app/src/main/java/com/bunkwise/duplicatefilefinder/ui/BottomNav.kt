@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bunkwise.duplicatefilefinder.Performance
 import com.bunkwise.duplicatefilefinder.R
 import com.bunkwise.duplicatefilefinder.ui.icons.AppIcons
 
@@ -63,13 +64,12 @@ private val Tabs = listOf(
 val BottomNavClearance = 96.dp
 
 /**
- * The floating nav capsule (from Night Mode): dark in both themes, only the active tab shows its
- * label, and an accent dot slides under it. The pages are Fragments, not part of this Compose
- * tree, so there is no live blur behind it - it is the plain navBg tint Night Mode itself uses on
- * Android 11 and older and in lite mode.
+ * The floating nav capsule (from Night Mode): only the active tab shows its label, and an accent
+ * dot slides under it. With [glass] the page behind is blurred into it (Android 12+, not lite);
+ * otherwise it is the plain navBg tint.
  */
 @Composable
-fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) {
+fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier, glass: Glass? = null) {
     val n = Df.c
     val capsule = RoundedCornerShape(34.dp)
     Column(modifier = modifier.fillMaxWidth()) {
@@ -80,7 +80,10 @@ fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modif
                 .heightIn(min = 68.dp)
                 .shadow(12.dp, capsule, ambientColor = n.shade, spotColor = n.shade)
                 .clip(capsule)
-                .background(n.navBg)
+                .then(
+                    if (glass != null && !Performance.lite) Modifier.glassEffect(glass, n.bg, 28.dp, fallback = n.navBg, tint = n.navBg.copy(alpha = 0.55f))
+                    else Modifier.background(n.navBg),
+                )
                 // Light catching the top edge, fading out down the sides.
                 .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f))), capsule)
                 .padding(horizontal = Spacing.sm),

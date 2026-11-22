@@ -12,11 +12,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bunkwise.duplicatefilefinder.ui.composeScreen
+import com.bunkwise.duplicatefilefinder.ui.Tab
+import com.bunkwise.duplicatefilefinder.ui.tabScreen
 import com.bunkwise.duplicatefilefinder.ui.icons.AppIcons
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.bunkwise.duplicatefilefinder.MainActivity
 import com.bunkwise.duplicatefilefinder.R
+import com.bunkwise.duplicatefilefinder.ads.ProFeature
+import com.bunkwise.duplicatefilefinder.ads.Unlocks
+import androidx.compose.ui.graphics.Color
 import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.core.common.Formatters
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanSchedule
@@ -31,14 +36,22 @@ class SettingsFragment : Fragment() {
 
     enum class Key { SCAN_FOLDER, EXCLUDE, SCHEDULE, BIN, ARCHIVE, THEME, LANGUAGE, PREMIUM, RATE, ABOUT }
 
-    /** Rows that only work with Premium; free users are taken to the Premium screen. */
-    private val premiumOnly = setOf(Key.SCAN_FOLDER, Key.EXCLUDE, Key.SCHEDULE, Key.ARCHIVE)
+    /** Rows that only work with Premium (or a 12-hour ad unlock). */
+    private val premiumOnly = mapOf(
+        Key.SCAN_FOLDER to ProFeature.SCAN_FOLDER,
+        Key.EXCLUDE to ProFeature.EXCLUDE,
+        Key.SCHEDULE to ProFeature.SCHEDULE,
+        Key.ARCHIVE to ProFeature.ARCHIVE,
+    )
+
+    private fun locked(key: Key, premium: Boolean) =
+        premiumOnly[key]?.let { !Unlocks.unlocked(premium, it) } ?: false
 
     private val sections = listOf(
         R.string.section_scanning to listOf(Key.SCAN_FOLDER, Key.EXCLUDE, Key.SCHEDULE),
         R.string.section_removing to listOf(Key.BIN, Key.ARCHIVE),
         R.string.section_app to listOf(Key.THEME, Key.LANGUAGE),
-        R.string.section_about to listOf(Key.PREMIUM, Key.RATE, Key.ABOUT),
+        R.string.section_about to listOf(Key.RATE, Key.ABOUT),
     )
 
     private fun title(key: Key) = when (key) {
@@ -67,6 +80,19 @@ class SettingsFragment : Fragment() {
         Key.ABOUT -> AppIcons.Info
     }
 
+    /** Each row's icon colour, so the list scans by colour before text. */
+    private fun tint(key: Key) = when (key) {
+        Key.SCAN_FOLDER -> Color(0xFF4A90E2)
+        Key.EXCLUDE -> Color(0xFFE8873A)
+        Key.SCHEDULE -> Color(0xFF8E6CE0)
+        Key.BIN -> Color(0xFFE5534B)
+        Key.ARCHIVE -> Color(0xFF2FA59A)
+        Key.THEME -> Color(0xFF5C6BC0)
+        Key.LANGUAGE -> Color(0xFF3FA75E)
+        Key.PREMIUM, Key.RATE -> Color(0xFFF2B01E)
+        Key.ABOUT -> Color(0xFF7D8394)
+    }
+
     private enum class FolderTarget { SCAN, EXCLUDE, ARCHIVE }
     private var pendingFolderTarget: FolderTarget? = null
 
@@ -81,18 +107,22 @@ class SettingsFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        composeScreen {
+        tabScreen(Tab.SETTINGS) {
             val state by viewModel.state.collectAsStateWithLifecycle()
+            Unlocks.version.collectAsStateWithLifecycle().value // re-read the locks after an ad
             SettingsScreen(
-                sections.map { (label, keys) -> getString(label) to keys.map { row(it, state) } },
+                premium = state.settings.isPremium,
+                sections = sections.map { (label, keys) -> getString(label) to keys.map { row(it, state) } },
                 onRow = ::onRowClicked,
+                onWatchAd = { key -> premiumOnly[key]?.let { (activity as? MainActivity)?.watchAd(it) } },
+                onPremium = { findNavController().navigate(R.id.premiumFragment) },
             )
         }
 
     private fun row(key: Key, state: SettingsViewModel.State): SettingRow<Key> {
         val s = state.settings
         val premium = s.isPremium
-        val archiveOn = premium && s.archiveMode && s.archiveTreeUri != null
+        val archiveOn = !locked(Key.ARCHIVE, premium) && s.archiveMode && s.archiveTreeUri != null
         val subtitle = when (key) {
             Key.SCAN_FOLDER -> s.scanFolders.firstOrNull() ?: getString(R.string.scan_folder_all)
             Key.EXCLUDE -> if (s.excludeFolders.isEmpty()) getString(R.string.exclude_none)
@@ -113,15 +143,16 @@ class SettingsFragment : Fragment() {
             title = getString(title(key)),
             subtitle = subtitle,
             icon = icon(key),
-            locked = key in premiumOnly && !premium,
-            switch = if (key == Key.ARCHIVE && premium) archiveOn else null,
+            tint = tint(key),
+            locked = locked(key, premium),
+            switch = if (key == Key.ARCHIVE && !locked(key, premium)) archiveOn else null,
         )
     }
 
     private fun onRowClicked(key: Key) {
         val s = viewModel.state.value.settings
-        if (key in premiumOnly && !s.isPremium) {
-            findNavController().navigate(R.id.premiumFragment)
+        if (locked(key, s.isPremium)) {
+            (activity as? MainActivity)?.requestUnlock(premiumOnly.getValue(key))
             return
         }
         when (key) {
