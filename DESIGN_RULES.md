@@ -6,6 +6,8 @@ The objective is to make the application look like it was designed deliberately 
 
 Do not optimize for visual novelty, "beautiful AI UI," Dribbble aesthetics, or generic modern-app conventions. Optimize for clarity, restraint, usability, consistency, and intentional design decisions.
 
+> **Exception (2026-11-22, owner's decision):** the app uses the Nightmode glass design system: translucent glass surfaces and the fixed backdrop glow from `ui/Glass.kt` / `ui/Components.kt`, with one blue accent. Glass, backdrop and cards come **only** from those shared components (`AppCard`, `RowCard`, `glassBackdrop`, ...). Never hand-roll new gradients, blurs or glows in a screen. Every other rule below still applies.
+
 ---
 
 ## 1. ABSOLUTELY AVOID GENERIC AI UI PATTERNS
