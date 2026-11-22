@@ -13,7 +13,7 @@ enum class ProFeature(@param:StringRes val label: Int) {
     EXCLUDE(R.string.set_exclude),
     SCHEDULE(R.string.set_schedule),
     ARCHIVE(R.string.set_archive),
-    SELECT_ALL(R.string.premium_f_select_all),
+    SELECT_ALL(R.string.select_all),
 }
 
 /**

@@ -41,6 +41,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import com.bunkwise.duplicatefilefinder.R
 import com.bunkwise.duplicatefilefinder.core.common.Formatters
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
@@ -54,7 +66,6 @@ import com.bunkwise.duplicatefilefinder.ui.BottomNavClearance
 import com.bunkwise.duplicatefilefinder.ui.Df
 import com.bunkwise.duplicatefilefinder.ui.DfCheckbox
 import com.bunkwise.duplicatefilefinder.ui.EmptyState
-import com.bunkwise.duplicatefilefinder.ui.Mono
 import com.bunkwise.duplicatefilefinder.ui.PrimaryButton
 import com.bunkwise.duplicatefilefinder.ui.Radius
 import com.bunkwise.duplicatefilefinder.ui.ScreenHeader
@@ -98,13 +109,7 @@ fun CleanupScreen(
             if (searchOpen) {
                 SearchBar(state.query, onQuery, closeSearch)
             } else {
-                val summary = if (result != null && hasGroups) {
-                    val ago = DateUtils.getRelativeTimeSpanString(
-                        result.finishedAtMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS,
-                    ).toString()
-                    stringResource(R.string.dup_summary, Formatters.bytes(result.wastedBytes), Formatters.count(result.groupCount), ago)
-                } else null
-                ScreenHeader(stringResource(R.string.duplicates_title), onBack = null, subtitle = summary) {
+                ScreenHeader(stringResource(R.string.duplicates_title), onBack = null) {
                     if (hasGroups) {
                         IconButton(onClick = { searchOpen = true }) {
                             Icon(AppIcons.Search, stringResource(R.string.cd_search), tint = n.tx)
@@ -112,7 +117,6 @@ fun CleanupScreen(
                     }
                 }
             }
-            if (hasGroups) Controls(state, onCategory, onSort)
 
             val empty: Triple<Int, String, Boolean>? = when {
                 result == null -> Triple(R.string.empty_no_scan_title, stringResource(R.string.empty_no_scan_body), true)
@@ -123,6 +127,7 @@ fun CleanupScreen(
                 else -> null
             }
             if (empty != null) {
+                if (hasGroups) Box(Modifier.padding(horizontal = Spacing.gutter)) { Controls(state, onCategory, onSort) }
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     EmptyState(
                         icon = AppIcons.NavDuplicates,
@@ -138,6 +143,8 @@ fun CleanupScreen(
                     contentPadding = PaddingValues(horizontal = Spacing.gutter, vertical = Spacing.sm),
                     verticalArrangement = Arrangement.spacedBy(Spacing.md),
                 ) {
+                    if (!searchOpen) item(key = "savings") { SavingsCard(state) }
+                    item(key = "controls") { Controls(state, onCategory, onSort) }
                     items(state.groups, key = { it.group.id }) { ui ->
                         GroupCard(ui, onToggleGroup, onOpenGroup)
                     }
@@ -218,40 +225,109 @@ private fun SearchBar(query: String, onQuery: (String) -> Unit, onClose: () -> U
     }
 }
 
+/**
+ * The one number (what can be freed) and where it is: a bar split by file type in each type's
+ * colour, so "it's mostly videos" reads before any list does.
+ */
+@Composable
+private fun SavingsCard(state: CleanupState) {
+    val n = Df.c
+    val result = state.result ?: return
+    val byType = remember(result) {
+        result.groups.groupBy { it.category }.mapValues { (_, gs) -> gs.sumOf { it.wastedBytes } }
+            .filterValues { it > 0 }.entries.sortedByDescending { it.value }
+    }
+    val ago = DateUtils.getRelativeTimeSpanString(result.finishedAtMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
+    AppCard {
+        Text(stringResource(R.string.home_last_scan_ago, ago), style = MaterialTheme.typography.bodySmall, color = n.mu)
+        Text(
+            Formatters.bytes(result.wastedBytes),
+            style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 34.sp, letterSpacing = (-0.6).sp),
+            color = n.tx,
+            modifier = Modifier.padding(top = Spacing.xxs),
+        )
+        Text(stringResource(R.string.home_can_free, Formatters.count(result.groupCount)), style = MaterialTheme.typography.bodySmall, color = n.mu)
+        if (byType.isNotEmpty()) {
+            Row(
+                Modifier.fillMaxWidth().padding(top = Spacing.lg).height(10.dp).clip(Radius.pill),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                byType.forEach { (cat, bytes) ->
+                    Box(Modifier.weight(bytes.toFloat().coerceAtLeast(result.wastedBytes / 60f)).fillMaxHeight().background(CategoryUi.tint(cat)))
+                }
+            }
+            // A scrolling Row, not FlowRow: this Compose BOM's foundation ships a FlowRow the compiler can't link.
+            Row(
+                Modifier.padding(top = Spacing.md).horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+            ) {
+                byType.forEach { (cat, bytes) ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(8.dp).clip(CircleShape).background(CategoryUi.tint(cat)))
+                        Text(
+                            stringResource(R.string.legend_item, stringResource(CategoryUi.label(cat)), Formatters.bytes(bytes)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = n.mu,
+                            modifier = Modifier.padding(start = Spacing.xs),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun Controls(
     state: CleanupState,
     onCategory: (FileCategory) -> Unit,
     onSort: (SortMode) -> Unit,
 ) {
-    var filterOpen by remember { mutableStateOf(false) }
     var sortOpen by remember { mutableStateOf(false) }
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = Spacing.gutter - Spacing.xs, vertical = Spacing.xs),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box {
-            Pill(stringResource(R.string.filter_type, stringResource(CategoryUi.label(state.category))), AppIcons.Filter) { filterOpen = true }
-            DropdownMenu(expanded = filterOpen, onDismissRequest = { filterOpen = false }) {
-                val counts = state.typeCounts
-                (listOf(FileCategory.ALL) + FilterTypes.filter { (counts[it] ?: 0) > 0 }).forEach { cat ->
-                    val label = stringResource(CategoryUi.label(cat))
-                    DropdownMenuItem(
-                        text = { Text(if (cat == FileCategory.ALL) label else stringResource(R.string.filter_item, label, counts[cat] ?: 0)) },
-                        onClick = { filterOpen = false; onCategory(cat) },
-                    )
-                }
+    val counts = state.typeCounts
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        LazyRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            items(listOf(FileCategory.ALL) + FilterTypes.filter { (counts[it] ?: 0) > 0 }) { cat ->
+                TypeChip(
+                    label = if (cat == FileCategory.ALL) stringResource(CategoryUi.label(cat))
+                    else stringResource(R.string.filter_item, stringResource(CategoryUi.label(cat)), counts[cat] ?: 0),
+                    tint = if (cat == FileCategory.ALL) Df.c.ac else CategoryUi.tint(cat),
+                    selected = state.category == cat,
+                    onClick = { onCategory(cat) },
+                )
             }
         }
-        Box {
-            Pill(stringResource(R.string.sort_label, stringResource(sortLabel(state.sort))), AppIcons.Sort) { sortOpen = true }
+        Box(Modifier.padding(start = Spacing.sm)) {
+            Pill(stringResource(sortLabel(state.sort)), AppIcons.Sort) { sortOpen = true }
             DropdownMenu(expanded = sortOpen, onDismissRequest = { sortOpen = false }) {
                 SortMode.entries.forEach { mode ->
                     DropdownMenuItem(text = { Text(stringResource(sortLabel(mode))) }, onClick = { sortOpen = false; onSort(mode) })
                 }
             }
         }
+    }
+}
+
+/** A file-type filter: its colour dot, filled with that colour when chosen. */
+@Composable
+private fun TypeChip(label: String, tint: Color, selected: Boolean, onClick: () -> Unit) {
+    val n = Df.c
+    Row(
+        Modifier
+            .height(40.dp)
+            .clip(Radius.pill)
+            .background(if (selected) tint else n.glass)
+            .border(1.dp, if (selected) tint else n.line, Radius.pill)
+            .clickable(onClick = onClick)
+            .semantics { this.selected = selected }
+            .padding(horizontal = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (!selected) {
+            Box(Modifier.size(8.dp).clip(CircleShape).background(tint))
+            Spacer(Modifier.size(Spacing.xs))
+        }
+        Text(label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = if (selected) Color.White else n.tx, maxLines = 1)
     }
 }
 
@@ -279,35 +355,52 @@ private fun GroupCard(ui: GroupUi, onToggle: (Long) -> Unit, onOpen: (Long) -> U
     val g = ui.group
     val keeper = SharedSelectionViewModel.keeperOf(g) ?: g.files.first()
     val freeable = Formatters.bytes(g.wastedBytes)
+    val visual = CategoryUi.isVisualMedia(g.category)
     AppCard(onClick = { onOpen(g.id) }, contentPadding = Spacing.md) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            DfCheckbox(
-                checked = ui.markedCount >= g.fileCount - 1 && ui.markedCount > 0,
-                partial = ui.markedCount > 0,
-                onCheckedChange = { onToggle(g.id) },
-                contentDescription = stringResource(R.string.cd_select_group, keeper.displayName),
-            )
-            Column(Modifier.weight(1f).padding(start = Spacing.xs)) {
+            Box {
+                Thumb(keeper.path, g.category, 72.dp)
+                Text(
+                    stringResource(R.string.keep_tag),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 4.dp)
+                        .clip(Radius.pill)
+                        .background(n.ok)
+                        .padding(horizontal = 6.dp, vertical = 1.dp),
+                )
+            }
+            Column(Modifier.weight(1f).padding(horizontal = Spacing.md)) {
                 Text(keeper.displayName, style = MaterialTheme.typography.titleSmall, color = n.tx, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     g.evidence?.let { stringResource(R.string.group_sub_similar, g.fileCount, (it.fusedScore * 100).toInt(), freeable) }
                         ?: stringResource(R.string.group_sub_exact, g.fileCount, freeable),
                     style = MaterialTheme.typography.bodySmall,
                     color = n.mu,
+                    modifier = Modifier.padding(top = Spacing.xxs),
                 )
+                if (visual) {
+                    val others = g.files.filter { it.id != keeper.id }
+                    Row(
+                        Modifier.padding(top = Spacing.sm),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        others.take(3).forEach { Thumb(it.path, g.category, 36.dp, Modifier.alpha(0.6f)) }
+                        val extra = others.size - 3
+                        if (extra > 0) Text(stringResource(R.string.plus_more, extra), style = MaterialTheme.typography.bodySmall, color = n.mu)
+                    }
+                }
             }
-            Icon(AppIcons.ChevronRight, null, tint = n.mu, modifier = Modifier.size(20.dp))
-        }
-        if (CategoryUi.isVisualMedia(g.category)) {
-            Row(
-                Modifier.padding(start = 52.dp, top = Spacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                g.files.take(3).forEach { Thumb(it.path, g.category, 64.dp) }
-                val extra = g.fileCount - 3
-                if (extra > 0) Text(stringResource(R.string.plus_more, extra), style = MaterialTheme.typography.bodyMedium.copy(fontFamily = Mono), color = n.mu)
-            }
+            DfCheckbox(
+                checked = ui.markedCount >= g.fileCount - 1 && ui.markedCount > 0,
+                partial = ui.markedCount > 0,
+                onCheckedChange = { onToggle(g.id) },
+                contentDescription = stringResource(R.string.cd_select_group, keeper.displayName),
+            )
         }
     }
 }

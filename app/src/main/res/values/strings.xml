@@ -324,4 +324,6 @@
     <string name="home_review">Review</string>
     <string name="home_scanning">Scanning</string>
     <string name="home_last_scan_ago">Last scan · %1$s</string>
+    <string name="legend_item">%1$s %2$s</string>
+    <string name="keep_tag">Keep</string>
 </resources>
