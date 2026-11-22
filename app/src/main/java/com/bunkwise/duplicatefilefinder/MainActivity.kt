@@ -94,9 +94,9 @@ class MainActivity : AppCompatActivity() {
                 Unlocks.Reward.Pass -> getString(R.string.unlock_done_pass)
                 is Unlocks.Reward.Feature -> r.feature?.let {
                     getString(R.string.unlock_done_feature, getString(it.label), r.toward, Unlocks.ADS_FOR_PRO)
-                }
+                } ?: getString(R.string.unlock_progress_toast, r.toward, Unlocks.ADS_FOR_PRO)
             }
-            text?.let { Toast.makeText(this, it, Toast.LENGTH_LONG).show() }
+            Toast.makeText(this, text, Toast.LENGTH_LONG).show()
             onReward()
         }
     }

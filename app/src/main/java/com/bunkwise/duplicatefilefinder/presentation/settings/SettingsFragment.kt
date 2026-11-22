@@ -21,7 +21,7 @@ import com.bunkwise.duplicatefilefinder.MainActivity
 import com.bunkwise.duplicatefilefinder.R
 import com.bunkwise.duplicatefilefinder.ads.ProFeature
 import com.bunkwise.duplicatefilefinder.ads.Unlocks
-import androidx.compose.ui.graphics.Color
+import com.bunkwise.duplicatefilefinder.ui.Tints
 import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.core.common.Formatters
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanSchedule
@@ -82,15 +82,15 @@ class SettingsFragment : Fragment() {
 
     /** Each row's icon colour, so the list scans by colour before text. */
     private fun tint(key: Key) = when (key) {
-        Key.SCAN_FOLDER -> Color(0xFF4A90E2)
-        Key.EXCLUDE -> Color(0xFFE8873A)
-        Key.SCHEDULE -> Color(0xFF8E6CE0)
-        Key.BIN -> Color(0xFFE5534B)
-        Key.ARCHIVE -> Color(0xFF2FA59A)
-        Key.THEME -> Color(0xFF5C6BC0)
-        Key.LANGUAGE -> Color(0xFF3FA75E)
-        Key.PREMIUM, Key.RATE -> Color(0xFFF2B01E)
-        Key.ABOUT -> Color(0xFF7D8394)
+        Key.SCAN_FOLDER -> Tints.blue
+        Key.EXCLUDE -> Tints.orange
+        Key.SCHEDULE -> Tints.purple
+        Key.BIN -> Tints.red
+        Key.ARCHIVE -> Tints.teal
+        Key.THEME -> Tints.indigo
+        Key.LANGUAGE -> Tints.green
+        Key.PREMIUM, Key.RATE -> Tints.yellow
+        Key.ABOUT -> Tints.grey
     }
 
     private enum class FolderTarget { SCAN, EXCLUDE, ARCHIVE }

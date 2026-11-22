@@ -267,3 +267,17 @@ fun DfTheme(content: @Composable () -> Unit) {
         )
     }
 }
+
+/** Icon colours: each thing keeps one colour everywhere (Settings rows, Premium cards, file types). */
+object Tints {
+    val blue = Color(0xFF4A90E2)
+    val orange = Color(0xFFE8873A)
+    val purple = Color(0xFF8E6CE0)
+    val red = Color(0xFFE5534B)
+    val teal = Color(0xFF2FA59A)
+    val indigo = Color(0xFF5C6BC0)
+    val green = Color(0xFF3FA75E)
+    val yellow = Color(0xFFF2B01E)
+    val grey = Color(0xFF7D8394)
+    val pink = Color(0xFFD9578B)
+}

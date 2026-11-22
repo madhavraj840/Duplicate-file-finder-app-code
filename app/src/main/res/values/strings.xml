@@ -314,4 +314,14 @@
     <string name="settings_pro_active">Premium is active</string>
     <string name="settings_pro_thanks">Thanks for supporting the app.</string>
     <string name="chip_watch_ad">Watch ad</string>
+    <string name="unlock_progress_toast">%1$d of %2$d ads watched. All of Premium unlocks at %2$d.</string>
+    <string name="premium_headline">Clean up without limits</string>
+    <string name="premium_f_folders_desc">Point a scan at one folder, or keep folders out of every scan.</string>
+    <string name="premium_f_schedule_desc">The app scans on its own and tells you what it found. It never deletes by itself.</string>
+    <string name="premium_f_archive_desc">Removed files go into a dated zip in a folder you choose, instead of the bin.</string>
+    <string name="home_storage_used">%1$s of %2$s used</string>
+    <string name="home_can_free">can be freed · %1$s groups</string>
+    <string name="home_review">Review</string>
+    <string name="home_scanning">Scanning</string>
+    <string name="home_last_scan_ago">Last scan · %1$s</string>
 </resources>

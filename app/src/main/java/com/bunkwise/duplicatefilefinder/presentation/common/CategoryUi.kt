@@ -5,7 +5,9 @@ import androidx.annotation.StringRes
 import com.bunkwise.duplicatefilefinder.R
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
 import com.bunkwise.duplicatefilefinder.ui.icons.AppIcons
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.bunkwise.duplicatefilefinder.ui.Tints
 
 /** Central mapping of file type -> icon/label so every screen names types the same way. */
 object CategoryUi {
@@ -27,6 +29,15 @@ object CategoryUi {
         FileCategory.AUDIO -> AppIcons.Audio
         FileCategory.DOCUMENTS, FileCategory.ALL -> AppIcons.Document
         FileCategory.OTHER -> AppIcons.OtherFile
+    }
+
+    /** Each type's colour, the same on Scan, Duplicates and thumbnails. */
+    fun tint(category: FileCategory): Color = when (category) {
+        FileCategory.IMAGES -> Tints.blue
+        FileCategory.VIDEOS -> Tints.pink
+        FileCategory.AUDIO -> Tints.purple
+        FileCategory.DOCUMENTS, FileCategory.ALL -> Tints.orange
+        FileCategory.OTHER -> Tints.teal
     }
 
     @StringRes
