@@ -7,17 +7,17 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
-import android.widget.RadioButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bunkwise.duplicatefilefinder.ui.composeScreen
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -28,33 +28,17 @@ import com.bunkwise.duplicatefilefinder.R
 import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.core.common.Formatters
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
-import com.bunkwise.duplicatefilefinder.core.domain.model.ScanMode
-import com.bunkwise.duplicatefilefinder.databinding.FragmentHomeBinding
-import com.bunkwise.duplicatefilefinder.databinding.ItemCheckRowBinding
-import com.bunkwise.duplicatefilefinder.databinding.ItemRadioRowBinding
-import com.bunkwise.duplicatefilefinder.presentation.common.CategoryUi
 import com.bunkwise.duplicatefilefinder.presentation.common.Permissions
-import com.bunkwise.duplicatefilefinder.presentation.common.announceAsCheckable
 import com.bunkwise.duplicatefilefinder.service.ScanForegroundService
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
-    private var _binding: FragmentHomeBinding? = null
-    private val binding get() = _binding!!
-
     private val viewModel: HomeViewModel by viewModels { requireContext().appContainer.viewModelFactory }
 
-    private val modeRows = mutableMapOf<ScanMode, ItemRadioRowBinding>()
-    private val typeRows = mutableMapOf<FileCategory, ItemCheckRowBinding>()
-
-    /** VERY_SIMILAR stays in the engine (old saved results use it) but isn't offered. */
-    private val modes = listOf(
-        Triple(ScanMode.EXACT, R.string.mode_exact, R.string.mode_exact_desc),
-        Triple(ScanMode.SIMILAR, R.string.mode_similar, R.string.mode_similar_desc),
-        Triple(ScanMode.DEEP, R.string.mode_deep, R.string.mode_deep_desc)
-    )
+    /** "Don't ask again" was hit: the grant button opens app settings instead. */
+    private var accessDenied by mutableStateOf(false)
 
     private val storagePermLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -73,25 +57,27 @@ class HomeFragment : Fragment() {
             viewModel.pendingScan = null
         }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        composeScreen {
+            val state by viewModel.state.collectAsStateWithLifecycle()
+            HomeScreen(
+                state = state,
+                accessDenied = accessDenied,
+                onGrant = viewModel::onGrantAccess,
+                onMode = viewModel::onModeSelected,
+                onType = { type, checked -> viewModel.onTypeToggled(type, checked) },
+                onScan = viewModel::onStartScan,
+                onOpenRunning = ::openScanScreen,
+                onOpenResults = { (activity as? MainActivity)?.selectTab(R.id.cleanupFragment) },
+                onOpenBin = { findNavController().navigate(R.id.recycleBinFragment) },
+                onPremium = { findNavController().navigate(R.id.premiumFragment) },
+            )
+        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        buildModeRows()
-        buildTypeRows()
-
-        binding.startScanButton.setOnClickListener { viewModel.onStartScan() }
-        binding.grantButton.setOnClickListener { viewModel.onGrantAccess() }
-        binding.runningRow.setOnClickListener { openScanScreen() }
-        binding.lastScanRow.setOnClickListener { (activity as? MainActivity)?.selectTab(R.id.cleanupFragment) }
-        binding.binRow.setOnClickListener { findNavController().navigate(R.id.recycleBinFragment) }
-
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch { viewModel.state.collect(::render) }
-                launch { viewModel.events.collect(::handleEvent) }
+                viewModel.events.collect(::handleEvent)
             }
         }
     }
@@ -100,87 +86,6 @@ class HomeFragment : Fragment() {
         super.onResume()
         viewModel.refresh() // permission may have changed in system settings
         renderAccessDenied()
-    }
-
-    private fun buildModeRows() {
-        for ((mode, title, desc) in modes) {
-            val row = ItemRadioRowBinding.inflate(layoutInflater, binding.modeContainer, false)
-            row.title.setText(title)
-            row.desc.setText(desc)
-            row.root.setOnClickListener { viewModel.onModeSelected(mode) }
-            binding.modeContainer.addView(row.root)
-            modeRows[mode] = row
-        }
-    }
-
-    private fun buildTypeRows() {
-        for (type in HomeViewModel.SCAN_TYPES) {
-            val row = ItemCheckRowBinding.inflate(layoutInflater, binding.typeContainer, false)
-            row.title.setText(CategoryUi.label(type))
-            row.root.setOnClickListener { viewModel.onTypeToggled(type, !row.check.isChecked) }
-            binding.typeContainer.addView(row.root)
-            typeRows[type] = row
-        }
-    }
-
-    private fun render(state: HomeViewModel.HomeState) {
-        state.storage?.let { s ->
-            binding.storageUsage.text = getString(R.string.storage_used, Formatters.bytes(s.usedBytes), Formatters.bytes(s.totalBytes))
-            binding.storageBar.progress = s.usedPercent
-            // Warning color only when space is actually tight.
-            binding.storageBar.setIndicatorColor(
-                ContextCompat.getColor(requireContext(), if (s.usedPercent >= 90) R.color.warning else R.color.primary)
-            )
-        }
-
-        binding.accessBlock.isVisible = !state.hasPermission
-        binding.optionsBlock.isVisible = state.hasPermission
-        binding.bottomBar.isVisible = state.hasPermission
-        binding.bottomDivider.isVisible = state.hasPermission
-
-        val running = state.runningPercent
-        binding.runningRow.isVisible = running != null
-        if (running != null) binding.runningText.text = getString(R.string.scan_running, running)
-
-        val result = state.lastResult
-        binding.lastScanRow.isVisible = result != null && running == null
-        if (result != null) {
-            val ago = DateUtils.getRelativeTimeSpanString(
-                result.finishedAtMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS
-            ).toString()
-            binding.lastScanText.text = if (result.groupCount == 0) getString(R.string.last_scan_clean, ago)
-            else getString(
-                R.string.last_scan_summary,
-                Formatters.bytes(result.wastedBytes), Formatters.count(result.groupCount), ago
-            )
-        }
-
-        binding.binText.text = if (state.bin.isEmpty()) getString(R.string.bin_row_empty)
-        else resources.getQuantityString(
-            R.plurals.bin_row_summary, state.bin.size, state.bin.size, Formatters.bytes(state.bin.sumOf { it.sizeBytes })
-        )
-
-        for ((mode, row) in modeRows) {
-            val checked = mode == state.selectedMode
-            row.radio.isChecked = checked
-            row.root.announceAsCheckable(RadioButton::class.java.name, checked)
-        }
-        for ((type, row) in typeRows) {
-            val checked = type in state.selectedTypes
-            row.check.isChecked = checked
-            row.root.announceAsCheckable(CheckBox::class.java.name, checked)
-            row.value.text = state.sizeByCategory[type]?.let(Formatters::bytes) ?: ""
-        }
-
-        val canScan = state.selectedTypes.isNotEmpty() && running == null
-        binding.startScanButton.isEnabled = canScan
-        val q = state.quota
-        binding.quotaCaption.isVisible = state.selectedTypes.isEmpty() || (q != null && !q.isPremium)
-        binding.quotaCaption.text = when {
-            state.selectedTypes.isEmpty() -> getString(R.string.types_none)
-            q != null -> getString(R.string.quota_left, Formatters.count(q.remaining), Formatters.count(q.limit + q.bonus))
-            else -> ""
-        }
     }
 
     private fun handleEvent(event: HomeViewModel.HomeEvent) {
@@ -239,9 +144,7 @@ class HomeFragment : Fragment() {
             Permissions.storagePermissions().none { shouldShowRequestPermissionRationale(it) }
 
     private fun renderAccessDenied() {
-        val denied = permanentlyDenied()
-        binding.accessDenied.isVisible = denied
-        binding.grantButton.setText(if (denied) R.string.open_settings else R.string.access_allow)
+        accessDenied = permanentlyDenied()
     }
 
     private fun requestStorageAccess() {
@@ -309,13 +212,6 @@ class HomeFragment : Fragment() {
                 context?.let { Toast.makeText(it, R.string.ad_not_ready, Toast.LENGTH_SHORT).show() }
             }
         )
-    }
-
-    override fun onDestroyView() {
-        _binding = null
-        modeRows.clear()
-        typeRows.clear()
-        super.onDestroyView()
     }
 
     private companion object {
