@@ -7,50 +7,65 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.isVisible
+import androidx.compose.runtime.getValue
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bunkwise.duplicatefilefinder.ui.composeScreen
+import com.bunkwise.duplicatefilefinder.ui.icons.AppIcons
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.bunkwise.duplicatefilefinder.R
 import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.core.common.Formatters
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanSchedule
-import com.bunkwise.duplicatefilefinder.databinding.FragmentSettingsBinding
-import com.bunkwise.duplicatefilefinder.databinding.ItemSettingsRowBinding
 import com.bunkwise.duplicatefilefinder.presentation.common.AppLanguages
 import com.bunkwise.duplicatefilefinder.presentation.common.ThemePrefs
 import com.bunkwise.duplicatefilefinder.presentation.common.TreeUris
-import com.bunkwise.duplicatefilefinder.presentation.common.announceAsCheckable
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import kotlinx.coroutines.launch
-import java.io.File
 
 class SettingsFragment : Fragment() {
 
-    private var _binding: FragmentSettingsBinding? = null
-    private val binding get() = _binding!!
-
     private val viewModel: SettingsViewModel by viewModels { requireContext().appContainer.viewModelFactory }
 
-    private enum class Key { SCAN_FOLDER, EXCLUDE, SCHEDULE, BIN, ARCHIVE, THEME, LANGUAGE, PREMIUM, RATE, ABOUT }
+    enum class Key { SCAN_FOLDER, EXCLUDE, SCHEDULE, BIN, ARCHIVE, THEME, LANGUAGE, PREMIUM, RATE, ABOUT }
 
     /** Rows that only work with Premium; free users are taken to the Premium screen. */
     private val premiumOnly = setOf(Key.SCAN_FOLDER, Key.EXCLUDE, Key.SCHEDULE, Key.ARCHIVE)
 
     private val sections = listOf(
-        R.string.section_scanning to listOf(Key.SCAN_FOLDER to R.string.set_scan_folder, Key.EXCLUDE to R.string.set_exclude, Key.SCHEDULE to R.string.set_schedule),
-        R.string.section_removing to listOf(Key.BIN to R.string.recycle_bin, Key.ARCHIVE to R.string.set_archive),
-        R.string.section_app to listOf(Key.THEME to R.string.set_theme, Key.LANGUAGE to R.string.language),
-        R.string.section_about to listOf(Key.PREMIUM to R.string.premium, Key.RATE to R.string.rate, Key.ABOUT to R.string.about)
+        R.string.section_scanning to listOf(Key.SCAN_FOLDER, Key.EXCLUDE, Key.SCHEDULE),
+        R.string.section_removing to listOf(Key.BIN, Key.ARCHIVE),
+        R.string.section_app to listOf(Key.THEME, Key.LANGUAGE),
+        R.string.section_about to listOf(Key.PREMIUM, Key.RATE, Key.ABOUT),
     )
 
-    private val rows = mutableMapOf<Key, ItemSettingsRowBinding>()
+    private fun title(key: Key) = when (key) {
+        Key.SCAN_FOLDER -> R.string.set_scan_folder
+        Key.EXCLUDE -> R.string.set_exclude
+        Key.SCHEDULE -> R.string.set_schedule
+        Key.BIN -> R.string.recycle_bin
+        Key.ARCHIVE -> R.string.set_archive
+        Key.THEME -> R.string.set_theme
+        Key.LANGUAGE -> R.string.language
+        Key.PREMIUM -> R.string.premium
+        Key.RATE -> R.string.rate
+        Key.ABOUT -> R.string.about
+    }
+
+    private fun icon(key: Key) = when (key) {
+        Key.SCAN_FOLDER -> AppIcons.Folder
+        Key.EXCLUDE -> AppIcons.FolderOff
+        Key.SCHEDULE -> AppIcons.Schedule
+        Key.BIN -> AppIcons.Bin
+        Key.ARCHIVE -> AppIcons.Archive
+        Key.THEME -> AppIcons.Theme
+        Key.LANGUAGE -> AppIcons.Language
+        Key.PREMIUM -> AppIcons.Pro
+        Key.RATE -> AppIcons.Star
+        Key.ABOUT -> AppIcons.Info
+    }
 
     private enum class FolderTarget { SCAN, EXCLUDE, ARCHIVE }
     private var pendingFolderTarget: FolderTarget? = null
@@ -65,73 +80,42 @@ class SettingsFragment : Fragment() {
         onFolderPicked(target, uri)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentSettingsBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        for ((label, keys) in sections) {
-            val header = layoutInflater.inflate(R.layout.item_section_label, binding.rows, false) as TextView
-            header.setText(label)
-            binding.rows.addView(header)
-            for ((key, title) in keys) {
-                val row = ItemSettingsRowBinding.inflate(layoutInflater, binding.rows, false)
-                row.rowTitle.setText(title)
-                row.root.setOnClickListener { onRowClicked(key) }
-                binding.rows.addView(row.root)
-                rows[key] = row
-            }
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        composeScreen {
+            val state by viewModel.state.collectAsStateWithLifecycle()
+            SettingsScreen(
+                sections.map { (label, keys) -> getString(label) to keys.map { row(it, state) } },
+                onRow = ::onRowClicked,
+            )
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collect(::render)
-            }
-        }
-    }
-
-    private fun render(state: SettingsViewModel.State) {
+    private fun row(key: Key, state: SettingsViewModel.State): SettingRow<Key> {
         val s = state.settings
         val premium = s.isPremium
-        for (key in premiumOnly) rows[key]?.rowTag?.isVisible = !premium
-
-        subtitle(Key.SCAN_FOLDER, s.scanFolders.firstOrNull() ?: getString(R.string.scan_folder_all))
-        subtitle(
-            Key.EXCLUDE,
-            if (s.excludeFolders.isEmpty()) getString(R.string.exclude_none)
-            else resources.getQuantityString(R.plurals.exclude_count, s.excludeFolders.size, s.excludeFolders.size)
-        )
-        subtitle(
-            Key.SCHEDULE,
-            if (s.scanSchedule == ScanSchedule.OFF) getString(R.string.schedule_off)
-            else getString(R.string.schedule_note, getString(scheduleLabel(s.scanSchedule)))
-        )
-        subtitle(
-            Key.BIN,
-            if (state.bin.isEmpty()) getString(R.string.bin_row_empty)
-            else resources.getQuantityString(R.plurals.bin_row_summary, state.bin.size, state.bin.size, Formatters.bytes(state.bin.sumOf { it.sizeBytes }))
-        )
         val archiveOn = premium && s.archiveMode && s.archiveTreeUri != null
-        subtitle(
-            Key.ARCHIVE,
-            if (archiveOn) getString(R.string.archive_dest, TreeUris.displayName(s.archiveTreeUri!!) ?: "")
+        val subtitle = when (key) {
+            Key.SCAN_FOLDER -> s.scanFolders.firstOrNull() ?: getString(R.string.scan_folder_all)
+            Key.EXCLUDE -> if (s.excludeFolders.isEmpty()) getString(R.string.exclude_none)
+            else resources.getQuantityString(R.plurals.exclude_count, s.excludeFolders.size, s.excludeFolders.size)
+            Key.SCHEDULE -> if (s.scanSchedule == ScanSchedule.OFF) getString(R.string.schedule_off)
+            else getString(R.string.schedule_note, getString(scheduleLabel(s.scanSchedule)))
+            Key.BIN -> if (state.bin.isEmpty()) getString(R.string.bin_row_empty)
+            else resources.getQuantityString(R.plurals.bin_row_summary, state.bin.size, state.bin.size, Formatters.bytes(state.bin.sumOf { it.sizeBytes }))
+            Key.ARCHIVE -> if (archiveOn) getString(R.string.archive_dest, TreeUris.displayName(s.archiveTreeUri!!) ?: "")
             else getString(R.string.archive_desc)
-        )
-        rows[Key.ARCHIVE]?.let { row ->
-            row.rowSwitch.isVisible = premium
-            row.rowSwitch.isChecked = archiveOn
-            if (premium) row.root.announceAsCheckable(android.widget.Switch::class.java.name, archiveOn)
+            Key.THEME -> getString(themeLabel(ThemePrefs.current(requireContext())))
+            Key.LANGUAGE -> AppLanguages.displayName(s.languageTag)
+            Key.PREMIUM -> getString(if (premium) R.string.premium_active else R.string.premium_inactive)
+            Key.RATE, Key.ABOUT -> null
         }
-        subtitle(Key.THEME, getString(themeLabel(ThemePrefs.current(requireContext()))))
-        subtitle(Key.LANGUAGE, AppLanguages.displayName(s.languageTag))
-        subtitle(Key.PREMIUM, getString(if (premium) R.string.premium_active else R.string.premium_inactive))
-    }
-
-    private fun subtitle(key: Key, text: String) {
-        val row = rows[key] ?: return
-        row.rowSubtitle.isVisible = true
-        row.rowSubtitle.text = text
+        return SettingRow(
+            key = key,
+            title = getString(title(key)),
+            subtitle = subtitle,
+            icon = icon(key),
+            locked = key in premiumOnly && !premium,
+            switch = if (key == Key.ARCHIVE && premium) archiveOn else null,
+        )
     }
 
     private fun onRowClicked(key: Key) {
@@ -290,9 +274,4 @@ class SettingsFragment : Fragment() {
 
     private fun toast(res: Int) = Toast.makeText(requireContext(), res, Toast.LENGTH_LONG).show()
 
-    override fun onDestroyView() {
-        _binding = null
-        rows.clear()
-        super.onDestroyView()
-    }
 }
