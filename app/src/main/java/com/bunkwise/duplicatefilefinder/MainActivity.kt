@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.navOptions
 import com.bunkwise.duplicatefilefinder.databinding.ActivityMainBinding
+import com.bunkwise.duplicatefilefinder.engage.Engagement
 import com.bunkwise.duplicatefilefinder.service.NotificationOrchestrator
 
 class MainActivity : AppCompatActivity() {
@@ -108,6 +109,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         Performance.watch(window)
+        Engagement.onAppOpened()
         appContainer.rewardedAds.onResume(this)
     }
 

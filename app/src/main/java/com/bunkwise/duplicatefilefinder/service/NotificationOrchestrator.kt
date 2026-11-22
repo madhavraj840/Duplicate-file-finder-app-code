@@ -14,6 +14,7 @@ import com.bunkwise.duplicatefilefinder.core.common.Formatters
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanProgress
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanResult
 import com.bunkwise.duplicatefilefinder.core.domain.repository.DeletionOutcome
+import com.bunkwise.duplicatefilefinder.engage.Engagement
 
 /**
  * The ONLY writer of notifications (NOTIFICATION.TXT §6). Fixed ids so updates
@@ -25,11 +26,13 @@ class NotificationOrchestrator(private val context: Context) {
         const val CH_SCAN = "scan_progress"
         const val CH_DELETE = "delete_progress"
         const val CH_RESULTS = "results"
+        const val CH_REMINDERS = "reminders"
 
         const val ID_SCAN = 1001
         const val ID_SCAN_RESULT = 1002
         const val ID_DELETE = 2001
         const val ID_DELETE_RESULT = 2002
+        const val ID_REMINDER = 3001
 
         /** Intent extra read by MainActivity to deep-link a notification tap. */
         const val EXTRA_NAV = "extra_nav_target"
@@ -49,6 +52,9 @@ class NotificationOrchestrator(private val context: Context) {
         )
         nm.createNotificationChannel(
             NotificationChannel(CH_RESULTS, context.getString(R.string.channel_results), NotificationManager.IMPORTANCE_DEFAULT)
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CH_REMINDERS, context.getString(R.string.channel_reminders), NotificationManager.IMPORTANCE_DEFAULT)
         )
     }
 
@@ -133,6 +139,39 @@ class NotificationOrchestrator(private val context: Context) {
         val title = context.getString(if (archived) R.string.notif_delete_done_archive else R.string.notif_delete_done_bin, count)
         val text = context.getString(if (archived) R.string.notif_delete_done_archive_text else R.string.notif_delete_done_bin_text)
         safeNotify(ID_DELETE_RESULT, resultBuilder(title, text).build())
+    }
+
+    // ---- reminders (Engagement decides when) ----
+
+    /**
+     * One reminder. [value] = new-media count for NEW_MEDIA, leftover bytes otherwise. Returns
+     * false when it can't show (notifications off, channel muted) so no cooldown is burned.
+     */
+    fun notifyReminder(kind: Engagement.Kind, value: Long): Boolean {
+        if (!manager.areNotificationsEnabled()) return false
+        ensureChannels()
+        if (manager.getNotificationChannel(CH_REMINDERS)?.importance == NotificationManagerCompat.IMPORTANCE_NONE) return false
+        val (title, text) = when (kind) {
+            Engagement.Kind.STORAGE_LOW -> context.getString(R.string.remind_storage_title) to context.getString(R.string.remind_storage_text)
+            Engagement.Kind.LEFTOVER -> context.getString(R.string.remind_leftover_title, Formatters.bytes(value)) to context.getString(R.string.remind_leftover_text)
+            Engagement.Kind.NEW_MEDIA -> context.getString(R.string.remind_new_title, Formatters.count(value.toInt())) to context.getString(R.string.remind_new_text)
+            Engagement.Kind.MONTHLY -> context.getString(R.string.remind_monthly_title) to context.getString(R.string.remind_monthly_text)
+        }
+        val nav = if (kind == Engagement.Kind.LEFTOVER) NAV_RESULTS else null
+        val n = NotificationCompat.Builder(context, CH_REMINDERS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setAutoCancel(true)
+            .setContentIntent(contentIntent(nav))
+            .build()
+        return try {
+            manager.notify(ID_REMINDER, n)
+            true
+        } catch (_: SecurityException) {
+            false
+        }
     }
 
     fun cancelScanProgress() = manager.cancel(ID_SCAN)

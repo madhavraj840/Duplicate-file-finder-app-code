@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.glide)
     // Google Mobile Ads (AdMob) — rewarded interstitial for the +500 file-limit boost.
     implementation(libs.play.services.ads)
+    implementation(libs.play.review)
 
     // Compose UI (design system ported from the Night Mode app)
     implementation(platform(libs.androidx.compose.bom))

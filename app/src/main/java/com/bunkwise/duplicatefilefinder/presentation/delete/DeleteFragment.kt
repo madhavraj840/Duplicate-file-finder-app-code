@@ -19,6 +19,7 @@ import com.bunkwise.duplicatefilefinder.R
 import com.bunkwise.duplicatefilefinder.appContainer
 import com.bunkwise.duplicatefilefinder.core.common.Formatters
 import com.bunkwise.duplicatefilefinder.core.domain.error.AppError
+import com.bunkwise.duplicatefilefinder.engage.Engagement
 import com.bunkwise.duplicatefilefinder.presentation.common.TreeUris
 import com.bunkwise.duplicatefilefinder.service.DeleteProgress
 import com.bunkwise.duplicatefilefinder.service.DeleteStatus
@@ -41,13 +42,13 @@ class DeleteFragment : Fragment() {
         composeScreen {
             val progress by viewModel.progress.collectAsStateWithLifecycle()
             val status by viewModel.status.collectAsStateWithLifecycle()
-            BackHandler(onBack = ::leave)
+            BackHandler(onBack = ::done)
             LaunchedEffect(status) {
                 if ((status as? DeleteStatus.Completed)?.archived == true) {
                     archiveFolder = viewModel.archiveFolderUri()?.let(TreeUris::displayName) ?: ""
                 }
             }
-            DeleteScreen(build(status, progress), onUndo = ::undo, onDone = ::leave)
+            DeleteScreen(build(status, progress), onUndo = ::undo, onDone = ::done)
         }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -126,6 +127,13 @@ class DeleteFragment : Fragment() {
             AppError.Delete.UNKNOWN -> R.string.reason_unknown
         }
     )
+
+    /** Done after a clean-up that removed something: the moment for Play's review sheet. */
+    private fun done() {
+        val ok = (viewModel.status.value as? DeleteStatus.Completed)?.outcome?.deleted ?: 0
+        if (ok > 0) activity?.let(Engagement::maybeAskReview)
+        leave()
+    }
 
     /** Back to Duplicates. A running cleanup keeps going in the background. */
     private fun leave() {

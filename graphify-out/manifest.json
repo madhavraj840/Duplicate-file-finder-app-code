@@ -1,7 +1,7 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1795328897.5417,
-    "ast_hash": "6c8ec5b9cfda6a03b4ad0d5533ba537a",
+    "mtime": 1795333713.3366554,
+    "ast_hash": "9b188e55699d9e6484adfa737ca501e4",
     "semantic_hash": ""
   },
   "app/src/androidTest/java/com/bunkwise/duplicatefilefinder/ExampleInstrumentedTest.kt": {
@@ -10,13 +10,13 @@
     "semantic_hash": "c4414c29093ecdbbab9b5fc8757f64af"
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/App.kt": {
-    "mtime": 1795328897.5417,
-    "ast_hash": "7123ea37c873b85003839e94aa0db678",
+    "mtime": 1795333713.3366554,
+    "ast_hash": "389ab8346a37894657b7af9385d57a08",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/MainActivity.kt": {
-    "mtime": 1795328897.5417,
-    "ast_hash": "c7495eda041b2d3c658ee82f938af715",
+    "mtime": 1795333713.337662,
+    "ast_hash": "ff1e663b426893c019122d381d46b542",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/core/common/DispatcherProvider.kt": {
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/CleanupFragment.kt": {
-    "mtime": 1795332528.703062,
-    "ast_hash": "5f153cd48cc27ee93dd2a83276ed05b3",
+    "mtime": 1795333762.4552457,
+    "ast_hash": "58885cea9c3f9e8f3bf0797c40ade1e4",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/GroupAdapter.kt": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/delete/DeleteFragment.kt": {
-    "mtime": 1795328897.5497348,
-    "ast_hash": "3a837bd57be149f5737b752bf560da62",
+    "mtime": 1795333713.3386886,
+    "ast_hash": "af242a35878c0def518d4b66686ab847",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/delete/DeleteViewModel.kt": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/service/DeleteController.kt": {
-    "mtime": 1789712478.4100912,
-    "ast_hash": "a52a56a6090c4a3672642aec55b62baa",
+    "mtime": 1795333713.337662,
+    "ast_hash": "8f2d435a14f5c6bc5769458f1d594b6d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/service/DeleteForegroundService.kt": {
@@ -290,8 +290,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/service/NotificationOrchestrator.kt": {
-    "mtime": 1789713726.965285,
-    "ast_hash": "42c43407d09a08ed7466ea2bf06d602d",
+    "mtime": 1795333666.7178535,
+    "ast_hash": "93609372ffa3e3a80cf78decafaa0d81",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/service/ScanController.kt": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/CleanupScreen.kt": {
-    "mtime": 1795332528.703062,
-    "ast_hash": "169ab75710816815c995835f437c3eed",
+    "mtime": 1795333762.4562383,
+    "ast_hash": "35448f6639d7739718c8ebda4a0d3743",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/PreviewScreen.kt": {
@@ -480,8 +480,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/FragmentCompose.kt": {
-    "mtime": 1795328897.560555,
-    "ast_hash": "bb25783ba0ffd854c5eabf2d48216d5c",
+    "mtime": 1795333762.4552457,
+    "ast_hash": "45a49cf700602260157f34f79832e876",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/Glass.kt": {
@@ -532,6 +532,21 @@
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/UnlockSheet.kt": {
     "mtime": 1795328897.5630655,
     "ast_hash": "d084651926d0ec089fa5f3ebc4fd9eba",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/bunkwise/duplicatefilefinder/engage/Engagement.kt": {
+    "mtime": 1795333646.04334,
+    "ast_hash": "6c8f864c40000e7a30fab20e319d4cac",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/bunkwise/duplicatefilefinder/engage/EngagementWorker.kt": {
+    "mtime": 1795333646.070336,
+    "ast_hash": "689cfd40a6ce20d0447222b83e2b03ab",
+    "semantic_hash": ""
+  },
+  "app/src/test/java/com/bunkwise/duplicatefilefinder/EngagementTest.kt": {
+    "mtime": 1795333779.7413607,
+    "ast_hash": "1f4391afb4e61d27781c5aa6039bdc2d",
     "semantic_hash": ""
   }
 }

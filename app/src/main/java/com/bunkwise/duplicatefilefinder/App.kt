@@ -6,6 +6,7 @@ import coil.ImageLoaderFactory
 import coil.decode.VideoFrameDecoder
 import com.bunkwise.duplicatefilefinder.ads.Unlocks
 import com.bunkwise.duplicatefilefinder.di.AppContainer
+import com.bunkwise.duplicatefilefinder.engage.Engagement
 import com.bunkwise.duplicatefilefinder.presentation.common.ThemePrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,7 @@ class App : Application(), ImageLoaderFactory {
         ThemePrefs.apply(this)
         Performance.init(this)
         Unlocks.init(this)
+        Engagement.init(this)
         container = AppContainer(this)
         container.notifications.ensureChannels()
 

@@ -27,7 +27,8 @@ class CleanupFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        tabScreen(Tab.CLEANUP) {
+        // With duplicates to go through, the page gets the whole screen: no nav, a back arrow instead.
+        tabScreen(Tab.CLEANUP, showNav = { (selection.state.collectAsStateWithLifecycle().value.result?.groupCount ?: 0) == 0 }) {
             val state by selection.state.collectAsStateWithLifecycle()
             CleanupScreen(
                 state = state,
@@ -42,6 +43,7 @@ class CleanupFragment : Fragment() {
                     findNavController().navigate(R.id.reviewDeleteFragment, null, navOptions { launchSingleTop = true })
                 },
                 onGoScan = { (activity as? MainActivity)?.selectTab(R.id.homeFragment) },
+                onBack = { (activity as? MainActivity)?.selectTab(R.id.homeFragment) },
                 onPremium = { findNavController().navigate(R.id.premiumFragment) },
             )
         }

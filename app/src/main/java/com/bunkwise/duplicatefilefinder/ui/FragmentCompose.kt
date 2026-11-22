@@ -23,11 +23,11 @@ fun Fragment.composeScreen(content: @Composable () -> Unit): View =
  * A tab root: [content] plus the nav capsule in the same Compose tree, so the page is recorded
  * ([glassSource]) and drawn blurred inside the capsule ([glassEffect]) - frosted glass for real.
  */
-fun Fragment.tabScreen(tab: Tab, content: @Composable () -> Unit): View = composeScreen {
+fun Fragment.tabScreen(tab: Tab, showNav: @Composable () -> Boolean = { true }, content: @Composable () -> Unit): View = composeScreen {
     val glass = rememberGlass()
     Box(Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize().then(if (Performance.lite) Modifier else Modifier.glassSource(glass))) { content() }
-        BottomNav(
+        if (showNav()) BottomNav(
             selected = tab,
             onSelect = { (activity as? MainActivity)?.selectTab(it) },
             glass = glass,

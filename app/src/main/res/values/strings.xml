@@ -19,7 +19,7 @@
     <string name="no_app_to_open">No app on this phone can open this file.</string>
 
     <!-- File types -->
-    <string name="cat_all">All types</string>
+    <string name="cat_all">All</string>
     <string name="cat_images">Images</string>
     <string name="cat_videos">Videos</string>
     <string name="cat_audio">Audio</string>
@@ -339,4 +339,14 @@
     <string name="step_find">Find files</string>
     <string name="step_compare">Compare contents</string>
     <string name="step_group">Group duplicates</string>
+    <string name="channel_reminders">Reminders</string>
+    <string name="remind_storage_title">Your phone is almost full</string>
+    <string name="remind_storage_text">Duplicate photos and files are the easiest space to get back. Scan to see how much.</string>
+    <string name="remind_leftover_title">%1$s of duplicates still on your phone</string>
+    <string name="remind_leftover_text">Your last scan found them. Review and remove the copies you don’t need.</string>
+    <string name="remind_new_title">%1$s new photos and videos since your last scan</string>
+    <string name="remind_new_text">Copies pile up fast. A quick scan finds them.</string>
+    <string name="remind_monthly_title">Time for your monthly clean-up</string>
+    <string name="remind_monthly_text">It’s been a month since your last scan. See what’s piled up.</string>
+    <string name="review_delete_size">Review &amp; delete %1$s</string>
 </resources>

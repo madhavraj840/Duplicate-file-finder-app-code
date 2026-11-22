@@ -2,6 +2,7 @@ package com.bunkwise.duplicatefilefinder.service
 
 import com.bunkwise.duplicatefilefinder.core.domain.error.AppError
 import com.bunkwise.duplicatefilefinder.core.domain.repository.DeletionOutcome
+import com.bunkwise.duplicatefilefinder.engage.Engagement
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,6 +44,7 @@ class DeleteController {
 
     fun onCompleted(outcome: DeletionOutcome, archived: Boolean) {
         isRunning = false
+        if (outcome.deleted > 0) Engagement.onCleanupDone(outcome.freedBytes)
         _status.value = DeleteStatus.Completed(outcome, archived)
     }
 
