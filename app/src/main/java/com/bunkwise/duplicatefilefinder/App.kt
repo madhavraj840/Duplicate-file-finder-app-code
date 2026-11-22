@@ -19,6 +19,7 @@ class App : Application() {
         super.onCreate()
         // Must run before the first Activity inflates so it starts in the right theme.
         ThemePrefs.apply(this)
+        Performance.init(this)
         container = AppContainer(this)
         container.notifications.ensureChannels()
 

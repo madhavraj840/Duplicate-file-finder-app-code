@@ -2,8 +2,14 @@ package com.bunkwise.duplicatefilefinder
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import com.bunkwise.duplicatefilefinder.ui.BottomNav
+import com.bunkwise.duplicatefilefinder.ui.DfTheme
+import com.bunkwise.duplicatefilefinder.ui.Tab
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
@@ -17,7 +23,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
 
     /** Tab destinations; everything else is a full-screen step without the bar. */
-    private val topLevel = setOf(R.id.homeFragment, R.id.cleanupFragment, R.id.settingsFragment)
+    private val topLevel = mapOf(
+        R.id.homeFragment to Tab.HOME,
+        R.id.cleanupFragment to Tab.CLEANUP,
+        R.id.settingsFragment to Tab.SETTINGS,
+    )
+
+    /** The active tab, or null on a pushed screen (the capsule hides). */
+    private var currentTab by mutableStateOf<Tab?>(Tab.HOME)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,10 +43,7 @@ class MainActivity : AppCompatActivity() {
         navController = (supportFragmentManager.findFragmentById(R.id.navHost) as NavHostFragment).navController
         setupBottomNav()
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            val tab = destination.id in topLevel
-            binding.bottomNav.visibility = if (tab) View.VISIBLE else View.GONE
-            binding.bottomNavDivider.visibility = binding.bottomNav.visibility
-            if (tab) binding.bottomNav.menu.findItem(destination.id)?.isChecked = true
+            currentTab = topLevel[destination.id]
         }
         if (savedInstanceState == null) handleNavIntent(intent)
     }
@@ -55,8 +65,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNav() {
-        binding.bottomNav.setOnItemSelectedListener { item -> selectTab(item.itemId); true }
-        binding.bottomNav.setOnItemReselectedListener { /* tabs keep no inner state */ }
+        binding.bottomNavCompose.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        binding.bottomNavCompose.setContent {
+            DfTheme {
+                currentTab?.let { tab ->
+                    BottomNav(selected = tab, onSelect = { picked ->
+                        topLevel.entries.firstOrNull { it.value == picked }?.let { selectTab(it.key) }
+                    })
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Performance.watch(window)
+    }
+
+    override fun onPause() {
+        Performance.unwatch(window)
+        super.onPause()
     }
 
     /**
