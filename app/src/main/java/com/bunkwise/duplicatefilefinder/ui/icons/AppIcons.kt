@@ -61,6 +61,7 @@ object AppIcons {
     val Check = Icons.Rounded.Check
     val Checked = Icons.Rounded.CheckBox
     val Unchecked = Icons.Rounded.CheckBoxOutlineBlank
+    val Partial = Icons.Rounded.IndeterminateCheckBox
     val Selected = Icons.Rounded.RadioButtonChecked
     val Unselected = Icons.Rounded.RadioButtonUnchecked
     val StatusOk = Icons.Rounded.CheckCircle

@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.lottie.compose)
     implementation(libs.coil.compose)
+    implementation(libs.coil.video)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)

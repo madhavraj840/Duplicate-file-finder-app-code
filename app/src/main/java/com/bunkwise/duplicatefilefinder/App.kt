@@ -1,6 +1,9 @@
 package com.bunkwise.duplicatefilefinder
 
 import android.app.Application
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.VideoFrameDecoder
 import com.bunkwise.duplicatefilefinder.di.AppContainer
 import com.bunkwise.duplicatefilefinder.presentation.common.ThemePrefs
 import kotlinx.coroutines.CoroutineScope
@@ -8,12 +11,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class App : Application() {
+class App : Application(), ImageLoaderFactory {
 
     lateinit var container: AppContainer
         private set
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /** Coil (thumbnails) with video-frame support, so video duplicates get a preview too. */
+    override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
+        .components { add(VideoFrameDecoder.Factory()) }
+        .crossfade(!Performance.lite)
+        .build()
 
     override fun onCreate() {
         super.onCreate()

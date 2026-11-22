@@ -741,7 +741,14 @@ fun Modifier.navBarPadding(): Modifier = windowInsetsPadding(WindowInsets.naviga
 
 /** The app's checkbox: an accent box when on, a hollow line2 box when off. 48dp touch target. */
 @Composable
-fun DfCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier, contentDescription: String? = null) {
+fun DfCheckbox(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+    /** Some but not all - drawn as a dash, still "unchecked" for the toggle. */
+    partial: Boolean = false,
+) {
     val n = Df.c
     Box(
         modifier = modifier
@@ -752,9 +759,13 @@ fun DfCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: M
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            if (checked) AppIcons.Checked else AppIcons.Unchecked,
+            when {
+                checked -> AppIcons.Checked
+                partial -> AppIcons.Partial
+                else -> AppIcons.Unchecked
+            },
             contentDescription = null,
-            tint = if (checked) n.ac else n.line2,
+            tint = if (checked || partial) n.ac else n.line2,
             modifier = Modifier.size(24.dp),
         )
     }
