@@ -291,4 +291,9 @@
     <string name="premium_unavailable">Purchases aren\'t available in this version yet.</string>
     <string name="premium_debug_on">Turn on (debug build)</string>
     <string name="premium_debug_off">Turn off (debug build)</string>
+    <!-- Compose design system -->
+    <string name="pro_tag">PRO</string>
+    <string name="status_granted">Allowed</string>
+    <string name="action_turn_on">Turn on</string>
+    <string name="action_fix">Allow</string>
 </resources>
