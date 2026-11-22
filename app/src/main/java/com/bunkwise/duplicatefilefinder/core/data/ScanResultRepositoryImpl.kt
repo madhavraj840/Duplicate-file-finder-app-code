@@ -11,6 +11,7 @@ import com.bunkwise.duplicatefilefinder.core.domain.model.ScanMode
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanResult
 import com.bunkwise.duplicatefilefinder.core.domain.model.Signal
 import com.bunkwise.duplicatefilefinder.core.domain.repository.ScanResultRepository
+import com.bunkwise.duplicatefilefinder.core.domain.repository.SettingsRepository
 import com.bunkwise.duplicatefilefinder.core.engine.KeeperRanker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,8 @@ import java.io.File
  * drop-in behind this same interface — §8.)
  */
 class ScanResultRepositoryImpl(
-    context: Context
+    context: Context,
+    private val settings: SettingsRepository,
 ) : ScanResultRepository {
 
     private val file = AtomicFile(File(context.filesDir, "last_scan.json"))
@@ -39,7 +41,10 @@ class ScanResultRepositoryImpl(
     override fun observe() = flow
     override fun current(): ScanResult? = state.value
 
-    override suspend fun save(result: ScanResult) {
+    /** Saves [raw] with each group's keeper picked by the user's keep rule. */
+    override suspend fun save(raw: ScanResult) {
+        val rule = settings.current().keepRule
+        val result = raw.copy(groups = raw.groups.map { it.copy(keeperId = KeeperRanker.keeperId(it.files, rule)) })
         state.value = result
         withContext(Dispatchers.IO) {
             // AtomicFile: a crash mid-write keeps the previous snapshot intact.
@@ -65,8 +70,7 @@ class ScanResultRepositoryImpl(
             when {
                 kept.size < 2 -> null // a group needs >= 2 files
                 else -> {
-                    val keeperId = if (kept.any { it.id == g.keeperId }) g.keeperId else KeeperRanker.keeperId(kept)
-                    g.copy(files = kept, keeperId = keeperId)
+                    g.copy(files = kept) // save() re-picks the keeper
                 }
             }
         }

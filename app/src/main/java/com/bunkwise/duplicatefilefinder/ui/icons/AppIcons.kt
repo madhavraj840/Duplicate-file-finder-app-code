@@ -37,6 +37,7 @@ object AppIcons {
     val Archive = Icons.Rounded.Archive
     val Folder = Icons.Rounded.Folder
     val FolderOff = Icons.Rounded.FolderOff
+    val Hidden = Icons.Rounded.VisibilityOff
     val Schedule = Icons.Rounded.Schedule
     val Theme = Icons.Rounded.Contrast
     val Language = Icons.Rounded.Language

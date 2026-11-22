@@ -53,7 +53,9 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.HorizontalDivider
 import com.bunkwise.duplicatefilefinder.R
+import com.bunkwise.duplicatefilefinder.core.domain.model.KeepRule
 import com.bunkwise.duplicatefilefinder.core.common.Formatters
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
 import com.bunkwise.duplicatefilefinder.presentation.common.CategoryUi
@@ -91,6 +93,7 @@ fun CleanupScreen(
     onOpenGroup: (Long) -> Unit,
     onCategory: (FileCategory) -> Unit,
     onSort: (SortMode) -> Unit,
+    onKeepRule: (KeepRule) -> Unit,
     onQuery: (String) -> Unit,
     onSelectAll: () -> Unit,
     onReview: () -> Unit,
@@ -127,7 +130,7 @@ fun CleanupScreen(
                 else -> null
             }
             if (empty != null) {
-                if (hasGroups) Box(Modifier.padding(horizontal = Spacing.gutter)) { Controls(state, onCategory, onSort) }
+                if (hasGroups) Box(Modifier.padding(horizontal = Spacing.gutter)) { Controls(state, onCategory, onSort, onKeepRule) }
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     EmptyState(
                         icon = AppIcons.NavDuplicates,
@@ -144,7 +147,7 @@ fun CleanupScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.md),
                 ) {
                     if (!searchOpen) item(key = "savings") { SavingsCard(state) }
-                    item(key = "controls") { Controls(state, onCategory, onSort) }
+                    item(key = "controls") { Controls(state, onCategory, onSort, onKeepRule) }
                     items(state.groups, key = { it.group.id }) { ui ->
                         GroupCard(ui, onToggleGroup, onOpenGroup)
                     }
@@ -282,6 +285,7 @@ private fun Controls(
     state: CleanupState,
     onCategory: (FileCategory) -> Unit,
     onSort: (SortMode) -> Unit,
+    onKeepRule: (KeepRule) -> Unit,
 ) {
     var sortOpen by remember { mutableStateOf(false) }
     val counts = state.typeCounts
@@ -300,12 +304,45 @@ private fun Controls(
         Box(Modifier.padding(start = Spacing.sm)) {
             Pill(stringResource(sortLabel(state.sort)), AppIcons.Sort) { sortOpen = true }
             DropdownMenu(expanded = sortOpen, onDismissRequest = { sortOpen = false }) {
+                MenuHeader(stringResource(R.string.menu_sort_by))
                 SortMode.entries.forEach { mode ->
-                    DropdownMenuItem(text = { Text(stringResource(sortLabel(mode))) }, onClick = { sortOpen = false; onSort(mode) })
+                    MenuChoice(stringResource(sortLabel(mode)), state.sort == mode) { sortOpen = false; onSort(mode) }
+                }
+                HorizontalDivider(Modifier.padding(vertical = Spacing.xs), color = Df.c.line)
+                MenuHeader(stringResource(R.string.menu_keep))
+                KeepRule.entries.forEach { rule ->
+                    MenuChoice(stringResource(keepLabel(rule)), state.keepRule == rule) { sortOpen = false; onKeepRule(rule) }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun MenuHeader(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelMedium,
+        color = Df.c.mu,
+        modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+    )
+}
+
+@Composable
+private fun MenuChoice(text: String, chosen: Boolean, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(text, fontWeight = if (chosen) FontWeight.SemiBold else FontWeight.Normal) },
+        trailingIcon = if (chosen) ({ Icon(AppIcons.Check, null, tint = Df.c.ac, modifier = Modifier.size(18.dp)) }) else null,
+        onClick = onClick,
+    )
+}
+
+fun keepLabel(rule: KeepRule) = when (rule) {
+    KeepRule.BEST -> R.string.keep_best
+    KeepRule.OLDEST -> R.string.keep_oldest
+    KeepRule.NEWEST -> R.string.keep_newest
+    KeepRule.SHORTEST_NAME -> R.string.keep_shortest
+    KeepRule.LONGEST_NAME -> R.string.keep_longest
 }
 
 /** A file-type filter: its colour dot, filled with that colour when chosen. */

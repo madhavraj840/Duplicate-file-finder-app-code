@@ -1,6 +1,6 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1795325603.8897154,
+    "mtime": 1795328897.5417,
     "ast_hash": "6c8ec5b9cfda6a03b4ad0d5533ba537a",
     "semantic_hash": ""
   },
@@ -10,12 +10,12 @@
     "semantic_hash": "c4414c29093ecdbbab9b5fc8757f64af"
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/App.kt": {
-    "mtime": 1795328070.5978339,
+    "mtime": 1795328897.5417,
     "ast_hash": "7123ea37c873b85003839e94aa0db678",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/MainActivity.kt": {
-    "mtime": 1795328386.474489,
+    "mtime": 1795328897.5417,
     "ast_hash": "c7495eda041b2d3c658ee82f938af715",
     "semantic_hash": ""
   },
@@ -45,13 +45,13 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/core/data/FileEnumeratorImpl.kt": {
-    "mtime": 1795328070.7686324,
-    "ast_hash": "e0c3f2124653cdbcdf1c21de8decbd37",
+    "mtime": 1795328897.5437057,
+    "ast_hash": "6c971bfd5b6d74bed820c8712d8c87b0",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/core/data/QuotaRepositoryImpl.kt": {
-    "mtime": 1795328078.5283642,
-    "ast_hash": "4bf852ead1903022c2cc29ad08d3072c",
+    "mtime": 1795328897.5457106,
+    "ast_hash": "831ee657d3c142196fad0f3ebad8c80b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/core/data/RecycleBinRepositoryImpl.kt": {
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/CleanupFragment.kt": {
-    "mtime": 1795328167.5947247,
-    "ast_hash": "d9c5efc197bc254f01ded326fac42492",
+    "mtime": 1795328897.5464265,
+    "ast_hash": "e0a53514309dc9801eff8fd2ed77bbbc",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/GroupAdapter.kt": {
@@ -170,7 +170,7 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/PreviewFragment.kt": {
-    "mtime": 1795326018.351071,
+    "mtime": 1795328897.5478446,
     "ast_hash": "87607c41b605531ecdfe051f7a7e73d5",
     "semantic_hash": ""
   },
@@ -180,7 +180,7 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/common/CategoryUi.kt": {
-    "mtime": 1795328477.0208862,
+    "mtime": 1795328897.5489125,
     "ast_hash": "f5b2547dcc342b141af90fa179b686fe",
     "semantic_hash": ""
   },
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/delete/DeleteFragment.kt": {
-    "mtime": 1795326228.42234,
-    "ast_hash": "4b323c7641f45cc61a74a79dab1b66f1",
+    "mtime": 1795328897.5497348,
+    "ast_hash": "3a837bd57be149f5737b752bf560da62",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/delete/DeleteViewModel.kt": {
@@ -205,17 +205,17 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/home/HomeFragment.kt": {
-    "mtime": 1795328162.814263,
+    "mtime": 1795328897.551286,
     "ast_hash": "7cdff22ce03c9c036113ad6c49ffb105",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/home/HomeViewModel.kt": {
-    "mtime": 1795323189.6906438,
-    "ast_hash": "c9272ae2ff31653d64ad07ff03672531",
+    "mtime": 1795329563.9949164,
+    "ast_hash": "bf9706542adc6d62a3c43a1a3489b694",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/premium/PremiumFragment.kt": {
-    "mtime": 1795328451.1235313,
+    "mtime": 1795328897.552394,
     "ast_hash": "dbda804a7bd96a0a3782e4869b965218",
     "semantic_hash": ""
   },
@@ -225,12 +225,12 @@
     "semantic_hash": "ffaeafec7f856366bf0fba55c14a59c9"
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/reviewdelete/ReviewDeleteFragment.kt": {
-    "mtime": 1795326111.910798,
+    "mtime": 1795328897.552394,
     "ast_hash": "7ddff4ab1546d69740f61c79b79e8f89",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/scan/ScanFragment.kt": {
-    "mtime": 1795325495.7874198,
+    "mtime": 1795328897.5534546,
     "ast_hash": "107fed74b6ce7482c584b8b62b2b4835",
     "semantic_hash": ""
   },
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/settings/RecycleBinFragment.kt": {
-    "mtime": 1795326427.192628,
-    "ast_hash": "7864376691f6350be3f2fbe662815018",
+    "mtime": 1795328897.5552287,
+    "ast_hash": "44ecfbf90802797b59911694e90e21b9",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/settings/RecycleBinViewModel.kt": {
@@ -255,7 +255,7 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/settings/SettingsFragment.kt": {
-    "mtime": 1795328394.9246495,
+    "mtime": 1795328897.5563014,
     "ast_hash": "b54fd7c4c867be559ef1e7ffa80762f8",
     "semantic_hash": ""
   },
@@ -265,18 +265,18 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/shared/SharedSelectionViewModel.kt": {
-    "mtime": 1795328070.8148134,
-    "ast_hash": "97a585509f6fe4d23e820c21edb9c756",
+    "mtime": 1795328897.5563014,
+    "ast_hash": "9f00948e265b98b60df0238e7ac94b76",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/service/AutoScanScheduler.kt": {
-    "mtime": 1795328070.6652553,
-    "ast_hash": "d420d0046780091059f9eba91df4c367",
+    "mtime": 1795328897.5579848,
+    "ast_hash": "e7e9ac3d91f616cecb9e1ee0c4e91165",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/service/AutoScanWorker.kt": {
-    "mtime": 1795328070.715336,
-    "ast_hash": "2763783095410f040f78e9fec7ff4c78",
+    "mtime": 1795328897.5579848,
+    "ast_hash": "7c36bde7432b84a6edbf19588f28323f",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/service/DeleteController.kt": {
@@ -310,7 +310,7 @@
     "semantic_hash": "d52f39fbe41b6369d4286dbf56e47e98"
   },
   "build.gradle.kts": {
-    "mtime": 1795324646.9193778,
+    "mtime": 1795328897.5681322,
     "ast_hash": "e47df53f67d9e57f21ad5bf196e55b29",
     "semantic_hash": ""
   },
@@ -325,7 +325,7 @@
     "semantic_hash": "32fe5528653531abb12d51a66387f9b9"
   },
   "CLAUDE.md": {
-    "mtime": 1795326638.5563848,
+    "mtime": 1795328897.5396945,
     "ast_hash": "42d4730717d4f59a15c48f98949b9ff8",
     "semantic_hash": ""
   },
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ads/RewardedAdManager.kt": {
-    "mtime": 1795327998.0964096,
-    "ast_hash": "a38d24e171350402046f45a2dc580015",
+    "mtime": 1795328897.5437057,
+    "ast_hash": "c95ec07f3c70edd3ed132020a3b7f46d",
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
@@ -420,118 +420,118 @@
     "semantic_hash": ""
   },
   "DESIGN_RULES.md": {
-    "mtime": 1795326638.5563848,
+    "mtime": 1795328897.5396945,
     "ast_hash": "10bf02d5e47fc21cbb2334cc541a7647",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/Performance.kt": {
-    "mtime": 1795325223.227375,
-    "ast_hash": "e8e726a79debf21fb5a4e1c8bf4df1b9",
+    "mtime": 1795328897.5417,
+    "ast_hash": "90586464b732ea0b79167f6da8b7ceea",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/CleanupScreen.kt": {
-    "mtime": 1795328718.0012605,
+    "mtime": 1795328897.5474339,
     "ast_hash": "dbd6c90387e6aa75cc49541c4194054d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/cleanup/PreviewScreen.kt": {
-    "mtime": 1795326017.4552674,
-    "ast_hash": "72a8e45a9abaeb3859b394ba3f06dfac",
+    "mtime": 1795328897.5478446,
+    "ast_hash": "8a79698cc30d095feb8ff8238cba40c6",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/delete/DeleteScreen.kt": {
-    "mtime": 1795326228.9484856,
-    "ast_hash": "413d24412c209d723477c403b0066eef",
+    "mtime": 1795328897.5497348,
+    "ast_hash": "797ed762ad098d6fa7d969868935b588",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/home/HomeScreen.kt": {
-    "mtime": 1795328612.2012007,
-    "ast_hash": "220ec7a7b4802d1c5029d7bb3f571cc5",
+    "mtime": 1795329564.0032864,
+    "ast_hash": "6b29b0446e60f5d75b9bb8bad257f65b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/reviewdelete/ReviewScreen.kt": {
-    "mtime": 1795326111.234121,
-    "ast_hash": "6f9f48c902c97e41e4b046bf001abe83",
+    "mtime": 1795328897.5534546,
+    "ast_hash": "a423cd2b44d337a2dcf3acf96bbfe240",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/scan/ScanScreen.kt": {
-    "mtime": 1795325495.4741018,
-    "ast_hash": "5756b95bd7bc6ad8c87ac1772a87a2a3",
+    "mtime": 1795328897.5534546,
+    "ast_hash": "5f9868b19f895ad5c87293b2bbe13558",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/settings/RecycleBinScreen.kt": {
-    "mtime": 1795326406.7342489,
-    "ast_hash": "c06d04bc50460b97f1aa10291cba9e66",
+    "mtime": 1795328897.5552287,
+    "ast_hash": "28e1b06b7af889b427832204160bd2c4",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/presentation/settings/SettingsScreen.kt": {
-    "mtime": 1795328146.2916996,
-    "ast_hash": "e80cee2ce6dcdc4ed5ece9e845997605",
+    "mtime": 1795328897.5563014,
+    "ast_hash": "58442f48281b3ffafbd4281a691bf884",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/BottomNav.kt": {
-    "mtime": 1795328110.399727,
-    "ast_hash": "0ae1d3c8829ec51801cbf3566c25b080",
+    "mtime": 1795329564.0032864,
+    "ast_hash": "b35ce9ac6e4b7eff6be4045e345e4be0",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/Components.kt": {
-    "mtime": 1795328274.725532,
+    "mtime": 1795328897.5592992,
     "ast_hash": "b3aba1941b87fa9d217bc6b90da92b6b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/FragmentCompose.kt": {
-    "mtime": 1795328110.3598022,
-    "ast_hash": "6496583b2dc53e2283dac05e7161a28a",
+    "mtime": 1795328897.560555,
+    "ast_hash": "bb25783ba0ffd854c5eabf2d48216d5c",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/Glass.kt": {
-    "mtime": 1795325065.8661773,
-    "ast_hash": "09587a632ab69a00b651bace67907be7",
+    "mtime": 1795328897.560555,
+    "ast_hash": "2c0af08b1bcec7e633d640c1e797c4b5",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/ProBadge.kt": {
-    "mtime": 1795325161.8072639,
-    "ast_hash": "8c34a8d47c0bba08ac9dc06422771efa",
+    "mtime": 1795328897.5616047,
+    "ast_hash": "0102715f2036b1a44faafe08ae6451d6",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/Theme.kt": {
-    "mtime": 1795328394.880923,
-    "ast_hash": "2f826ff4a366632f0857f6debd22a670",
+    "mtime": 1795328897.5616047,
+    "ast_hash": "b1710fdc8ecd4ad53568e54ee8594723",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/Thumb.kt": {
-    "mtime": 1795325651.442834,
-    "ast_hash": "cdbc9cdb57c643a6801ab52f3322db8c",
+    "mtime": 1795328897.5616047,
+    "ast_hash": "366c0e9048d3ac59467037bdac8dd75e",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/icons/AppIcons.kt": {
-    "mtime": 1795325603.8927155,
+    "mtime": 1795328897.5640738,
     "ast_hash": "3ab9eca2125031a3a23f6dbdc9c45832",
     "semantic_hash": ""
   },
   "app/src/main/res/raw/pro_badge.json": {
-    "mtime": 1795324647.086154,
+    "mtime": 1795328897.565074,
     "ast_hash": "7a8c10fa6b470227010a8c799d636d4b",
     "semantic_hash": ""
   },
   "app/src/test/java/com/bunkwise/duplicatefilefinder/PerformanceTest.kt": {
-    "mtime": 1795325027.379979,
-    "ast_hash": "e33abf0477e3536538350b1bd3755052",
+    "mtime": 1795328897.5681322,
+    "ast_hash": "87c58ae72dd524aefab4b20b880bdf0a",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-11-22-compose-nightmode-design.md": {
-    "mtime": 1795324438.1471674,
-    "ast_hash": "2f1d4bed31a349df50b07f99bb519e13",
+    "mtime": 1795328897.5710466,
+    "ast_hash": "40fa98499821193b08278ade26f932e3",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ads/Unlocks.kt": {
-    "mtime": 1795328781.422555,
-    "ast_hash": "b7bff1cdc769f826e3de9d7a0d01379d",
+    "mtime": 1795328897.5437057,
+    "ast_hash": "b24df5e7e16eaeed058ac6c95784b29c",
     "semantic_hash": ""
   },
   "app/src/main/java/com/bunkwise/duplicatefilefinder/ui/UnlockSheet.kt": {
-    "mtime": 1795328029.2484608,
-    "ast_hash": "f9a4b66bc5ae0048f22d70e4711edb1e",
+    "mtime": 1795328897.5630655,
+    "ast_hash": "d084651926d0ec089fa5f3ebc4fd9eba",
     "semantic_hash": ""
   }
 }

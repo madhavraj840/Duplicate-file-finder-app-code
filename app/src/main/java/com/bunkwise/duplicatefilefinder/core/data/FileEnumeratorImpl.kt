@@ -38,8 +38,10 @@ class FileEnumeratorImpl(
      * those folder subtrees (empty = whole device); [exclude] skips subtrees. Paths are
      * normalised to lowercase without a trailing slash for prefix comparison.
      */
-    private data class Scope(val include: List<String>, val exclude: List<String>) {
+    private data class Scope(val include: List<String>, val exclude: List<String>, val skipHidden: Boolean = false) {
         fun accepts(path: String): Boolean {
+            // A dot-folder anywhere in the path (or a dot-file) is hidden.
+            if (skipHidden && "/." in path) return false
             val p = path.lowercase()
             if (exclude.any { p == it || p.startsWith("$it/") }) return false
             if (include.isNotEmpty() && include.none { p == it || p.startsWith("$it/") }) return false
@@ -53,7 +55,7 @@ class FileEnumeratorImpl(
         // An ad unlock that ran out stops applying the folders it set.
         val include = if (Unlocks.unlocked(s.isPremium, ProFeature.SCAN_FOLDER)) s.scanFolders else emptySet()
         val exclude = if (Unlocks.unlocked(s.isPremium, ProFeature.EXCLUDE)) s.excludeFolders else emptySet()
-        return Scope(include.map(::norm), exclude.map(::norm))
+        return Scope(include.map(::norm), exclude.map(::norm), s.skipHidden)
     }
 
     override fun enumerate(categories: Set<FileCategory>, budget: Int): Flow<FileItem> = flow {

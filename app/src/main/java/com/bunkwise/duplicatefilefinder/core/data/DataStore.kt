@@ -23,6 +23,8 @@ object PrefKeys {
     val EXCLUDE_FOLDERS = stringSetPreferencesKey("exclude_folders")
     val SCAN_SCHEDULE = stringPreferencesKey("scan_schedule")
     val ARCHIVE_TREE_URI = stringPreferencesKey("archive_tree_uri")
+    val KEEP_RULE = stringPreferencesKey("keep_rule")
+    val SKIP_HIDDEN = booleanPreferencesKey("skip_hidden")
 
     // quota
     val QUOTA_DATE = stringPreferencesKey("quota_date")

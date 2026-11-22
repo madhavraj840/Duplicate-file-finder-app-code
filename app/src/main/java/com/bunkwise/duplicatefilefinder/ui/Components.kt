@@ -121,31 +121,7 @@ private fun Modifier.cardSurface(shape: Shape): Modifier {
 /** Every page's background: the theme colour plus two fixed soft glows that stay put while the glass
  *  cards scroll over them - the glass needs something behind it to show. */
 @Composable
-fun Modifier.glassBackdrop(): Modifier {
-    val n = Df.c
-    val glowA = n.glowA
-    val glowB = n.glowB
-    val dark = n.bg.luminance() < 0.5f
-    return background(n.bg).drawWithCache {
-        val w = size.width
-        val h = size.height
-        // Toned down so the ribbons glow rather than shout: 60% toward black on a dark page, 45%
-        // toward white on a light one.
-        val toward = if (dark) 0f else 1f
-        val fade = if (dark) 0.6f else 0.45f
-        fun soft(ch: Float) = ch + (toward - ch) * fade
-        fun ribbon(glow: Color, from: Offset, to: Offset): Brush {
-            val c = Color(soft(glow.red), soft(glow.green), soft(glow.blue), (glow.alpha * 1.6f).coerceAtMost(1f))
-            return Brush.linearGradient(0f to Color.Transparent, 0.45f to c, 0.55f to c, 1f to Color.Transparent, start = from, end = to)
-        }
-        val a = ribbon(glowA, Offset(0f, h * 0.05f), Offset(w * 0.9f, h * 0.45f))
-        val b = ribbon(glowB, Offset(w, h * 0.45f), Offset(0f, h * 0.95f))
-        onDrawBehind {
-            drawRect(a)
-            drawRect(b)
-        }
-    }
-}
+fun Modifier.glassBackdrop(): Modifier = background(Df.c.bg)
 
 /** The one card: flat surface, 1px line. A card inside a card drops the line and steps to `s2`. */
 @Composable

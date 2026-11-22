@@ -35,6 +35,7 @@ class CleanupFragment : Fragment() {
                 onOpenGroup = ::openGroup,
                 onCategory = selection::setCategory,
                 onSort = selection::setSort,
+                onKeepRule = selection::setKeepRule,
                 onQuery = selection::setSearchQuery,
                 onSelectAll = ::onSelectAll,
                 onReview = {

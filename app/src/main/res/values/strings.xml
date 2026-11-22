@@ -327,4 +327,16 @@
     <string name="legend_item">%1$s %2$s</string>
     <string name="keep_tag">Keep</string>
     <string name="home_scan_phase_count">%1$s · %2$s files</string>
+    <string name="menu_sort_by">Sort by</string>
+    <string name="menu_keep">Copy to keep</string>
+    <string name="keep_best">Best copy</string>
+    <string name="keep_oldest">Oldest</string>
+    <string name="keep_newest">Newest</string>
+    <string name="keep_shortest">Shortest name</string>
+    <string name="keep_longest">Longest name</string>
+    <string name="set_skip_hidden">Skip hidden folders</string>
+    <string name="set_skip_hidden_desc">Leave out folders starting with a dot, like .thumbnails</string>
+    <string name="step_find">Find files</string>
+    <string name="step_compare">Compare contents</string>
+    <string name="step_group">Group duplicates</string>
 </resources>

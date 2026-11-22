@@ -34,6 +34,11 @@ class SettingsViewModel(
         enumerator.invalidateSizes()
     }
 
+    fun setSkipHidden(skip: Boolean) = viewModelScope.launch {
+        settings.setSkipHidden(skip)
+        enumerator.invalidateSizes()
+    }
+
     fun setScanSchedule(schedule: ScanSchedule) = viewModelScope.launch { settings.setScanSchedule(schedule) }
 
     /** Archiving is only ever ON together with a destination folder. */

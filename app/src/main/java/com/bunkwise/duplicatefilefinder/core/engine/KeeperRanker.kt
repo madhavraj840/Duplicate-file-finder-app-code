@@ -1,6 +1,7 @@
 package com.bunkwise.duplicatefilefinder.core.engine
 
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileItem
+import com.bunkwise.duplicatefilefinder.core.domain.model.KeepRule
 
 /**
  * Chooses the "best copy" to keep within a group (ARCHITECTURE §5.8). The first
@@ -17,9 +18,17 @@ object KeeperRanker {
     private val ORIGINAL_HINTS = listOf("dcim", "camera")
     private val DERIVED_HINTS = listOf(".thumbnails", "thumbnail", "whatsapp", "cache", "telegram", "download")
 
-    fun keeperId(files: List<FileItem>): Long {
+    fun keeperId(files: List<FileItem>, rule: KeepRule = KeepRule.BEST): Long {
         if (files.isEmpty()) return -1
-        return files.maxWith(::compare).id
+        // Ties fall back to the ranked order, so the pick is stable and still sensible.
+        val pick = when (rule) {
+            KeepRule.BEST -> return files.maxWith(::compare).id
+            KeepRule.OLDEST -> compareBy<FileItem> { -it.modifiedMs }
+            KeepRule.NEWEST -> compareBy { it.modifiedMs }
+            KeepRule.SHORTEST_NAME -> compareBy { -it.displayName.length }
+            KeepRule.LONGEST_NAME -> compareBy { it.displayName.length }
+        }
+        return files.maxWith(pick.thenComparator(::compare)).id
     }
 
     /** Positive => a ranks above b (better keeper). */

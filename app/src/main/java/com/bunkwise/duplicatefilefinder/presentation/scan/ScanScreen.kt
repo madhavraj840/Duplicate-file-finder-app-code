@@ -1,6 +1,14 @@
 package com.bunkwise.duplicatefilefinder.presentation.scan
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import com.bunkwise.duplicatefilefinder.ui.icons.AppIcons
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -66,6 +74,8 @@ fun ScanScreen(
                     color = n.mu,
                 )
                 Spacer(Modifier.height(Spacing.lg))
+                Steps(progress.phase)
+                Spacer(Modifier.height(Spacing.lg))
                 val bar = Modifier.fillMaxWidth().height(6.dp).clip(Radius.pill)
                 if (listing && !Performance.lite) {
                     LinearProgressIndicator(modifier = bar, color = n.ac, trackColor = n.s2)
@@ -107,6 +117,41 @@ fun ScanScreen(
                     height = 52.dp,
                     contentColor = n.danger,
                     modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+/** The scan's three steps: done ones ticked, the running one spinning, the rest waiting. */
+@Composable
+private fun Steps(phase: ScanPhase) {
+    val n = Df.c
+    val current = when (phase) {
+        ScanPhase.ENUMERATING -> 0
+        ScanPhase.HASHING, ScanPhase.COMPARING -> 1
+        ScanPhase.GROUPING -> 2
+        ScanPhase.DONE -> 3
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        listOf(R.string.step_find, R.string.step_compare, R.string.step_group).forEachIndexed { i, label ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(22.dp), contentAlignment = Alignment.Center) {
+                    when {
+                        i < current -> Icon(AppIcons.StatusOk, null, tint = n.ok, modifier = Modifier.size(22.dp))
+                        i == current && !Performance.lite ->
+                            CircularProgressIndicator(Modifier.size(18.dp), color = n.ac, strokeWidth = 2.dp)
+                        else -> Box(
+                            Modifier.size(14.dp).border(2.dp, if (i == current) n.ac else n.line, CircleShape),
+                        )
+                    }
+                }
+                Text(
+                    stringResource(label),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (i == current) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (i > current) n.mu else n.tx,
+                    modifier = Modifier.padding(start = Spacing.md),
                 )
             }
         }

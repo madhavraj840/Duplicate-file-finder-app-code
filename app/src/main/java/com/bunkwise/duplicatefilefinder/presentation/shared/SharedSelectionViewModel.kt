@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.bunkwise.duplicatefilefinder.core.domain.model.DuplicateGroup
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileItem
+import com.bunkwise.duplicatefilefinder.core.domain.model.KeepRule
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanResult
 import com.bunkwise.duplicatefilefinder.core.domain.repository.ScanResultRepository
 import com.bunkwise.duplicatefilefinder.core.domain.repository.SettingsRepository
@@ -29,7 +30,7 @@ import java.io.File
  */
 class SharedSelectionViewModel(
     private val scanRepo: ScanResultRepository,
-    settings: SettingsRepository
+    private val settings: SettingsRepository
 ) : ViewModel() {
 
     /** Each sort has its natural direction: biggest, A-Z, most copies. */
@@ -54,7 +55,8 @@ class SharedSelectionViewModel(
         val query: String = "",
         val archiveMode: Boolean = false,
         val archiveTreeUri: String? = null,
-        val isPremium: Boolean = false
+        val isPremium: Boolean = false,
+        val keepRule: KeepRule = KeepRule.BEST,
     )
 
     /** File ids marked for deletion (across all groups). */
@@ -105,7 +107,8 @@ class SharedSelectionViewModel(
                 // Archiving is premium; a lapsed premium falls back to the recycle bin.
                 archiveMode = Unlocks.unlocked(set.isPremium, ProFeature.ARCHIVE) && set.archiveMode,
                 archiveTreeUri = set.archiveTreeUri,
-                isPremium = set.isPremium
+                isPremium = set.isPremium,
+                keepRule = set.keepRule,
             )
         }
             // Filtering + sorting + mapping runs on every checkbox tap; keep it off the
@@ -168,6 +171,15 @@ class SharedSelectionViewModel(
     }
 
     fun clearSelection() { selectedFileIds.value = emptySet() }
+
+    /** New keep rule: remembered for later scans and applied to this result now. Marks start over. */
+    fun setKeepRule(rule: KeepRule) {
+        viewModelScope.launch {
+            settings.setKeepRule(rule)
+            selectedFileIds.value = emptySet()
+            scanRepo.current()?.let { scanRepo.save(it) }
+        }
+    }
     fun setCategory(cat: FileCategory) { category.value = cat }
     fun setSort(mode: SortMode) { sort.value = mode }
     fun setSearchQuery(q: String) { query.value = q }

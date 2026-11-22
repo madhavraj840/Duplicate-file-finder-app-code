@@ -21,6 +21,9 @@ enum class ScanMode {
  * Cadence for the premium background scheduled scan (Settings › Schedule Scan).
  * Feeds a WorkManager PeriodicWorkRequest; [intervalHours] is null when disabled.
  */
+/** Which copy of a duplicate group stays. BEST = the ranked recommendation (quality, folder, name, age). */
+enum class KeepRule { BEST, OLDEST, NEWEST, SHORTEST_NAME, LONGEST_NAME }
+
 enum class ScanSchedule {
     OFF, DAILY, WEEKLY, MONTHLY;
 

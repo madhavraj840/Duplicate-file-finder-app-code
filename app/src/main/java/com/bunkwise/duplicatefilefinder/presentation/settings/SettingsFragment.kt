@@ -34,7 +34,7 @@ class SettingsFragment : Fragment() {
 
     private val viewModel: SettingsViewModel by viewModels { requireContext().appContainer.viewModelFactory }
 
-    enum class Key { SCAN_FOLDER, EXCLUDE, SCHEDULE, BIN, ARCHIVE, THEME, LANGUAGE, PREMIUM, RATE, ABOUT }
+    enum class Key { SCAN_FOLDER, EXCLUDE, HIDDEN, SCHEDULE, BIN, ARCHIVE, THEME, LANGUAGE, PREMIUM, RATE, ABOUT }
 
     /** Rows that only work with Premium (or a 12-hour ad unlock). */
     private val premiumOnly = mapOf(
@@ -48,7 +48,7 @@ class SettingsFragment : Fragment() {
         premiumOnly[key]?.let { !Unlocks.unlocked(premium, it) } ?: false
 
     private val sections = listOf(
-        R.string.section_scanning to listOf(Key.SCAN_FOLDER, Key.EXCLUDE, Key.SCHEDULE),
+        R.string.section_scanning to listOf(Key.SCAN_FOLDER, Key.EXCLUDE, Key.HIDDEN, Key.SCHEDULE),
         R.string.section_removing to listOf(Key.BIN, Key.ARCHIVE),
         R.string.section_app to listOf(Key.THEME, Key.LANGUAGE),
         R.string.section_about to listOf(Key.RATE, Key.ABOUT),
@@ -57,6 +57,7 @@ class SettingsFragment : Fragment() {
     private fun title(key: Key) = when (key) {
         Key.SCAN_FOLDER -> R.string.set_scan_folder
         Key.EXCLUDE -> R.string.set_exclude
+        Key.HIDDEN -> R.string.set_skip_hidden
         Key.SCHEDULE -> R.string.set_schedule
         Key.BIN -> R.string.recycle_bin
         Key.ARCHIVE -> R.string.set_archive
@@ -70,6 +71,7 @@ class SettingsFragment : Fragment() {
     private fun icon(key: Key) = when (key) {
         Key.SCAN_FOLDER -> AppIcons.Folder
         Key.EXCLUDE -> AppIcons.FolderOff
+        Key.HIDDEN -> AppIcons.Hidden
         Key.SCHEDULE -> AppIcons.Schedule
         Key.BIN -> AppIcons.Bin
         Key.ARCHIVE -> AppIcons.Archive
@@ -84,6 +86,7 @@ class SettingsFragment : Fragment() {
     private fun tint(key: Key) = when (key) {
         Key.SCAN_FOLDER -> Tints.blue
         Key.EXCLUDE -> Tints.orange
+        Key.HIDDEN -> Tints.grey
         Key.SCHEDULE -> Tints.purple
         Key.BIN -> Tints.red
         Key.ARCHIVE -> Tints.teal
@@ -127,6 +130,7 @@ class SettingsFragment : Fragment() {
             Key.SCAN_FOLDER -> s.scanFolders.firstOrNull() ?: getString(R.string.scan_folder_all)
             Key.EXCLUDE -> if (s.excludeFolders.isEmpty()) getString(R.string.exclude_none)
             else resources.getQuantityString(R.plurals.exclude_count, s.excludeFolders.size, s.excludeFolders.size)
+            Key.HIDDEN -> getString(R.string.set_skip_hidden_desc)
             Key.SCHEDULE -> if (s.scanSchedule == ScanSchedule.OFF) getString(R.string.schedule_off)
             else getString(R.string.schedule_note, getString(scheduleLabel(s.scanSchedule)))
             Key.BIN -> if (state.bin.isEmpty()) getString(R.string.bin_row_empty)
@@ -145,7 +149,11 @@ class SettingsFragment : Fragment() {
             icon = icon(key),
             tint = tint(key),
             locked = locked(key, premium),
-            switch = if (key == Key.ARCHIVE && !locked(key, premium)) archiveOn else null,
+            switch = when {
+                key == Key.HIDDEN -> s.skipHidden
+                key == Key.ARCHIVE && !locked(key, premium) -> archiveOn
+                else -> null
+            },
         )
     }
 
@@ -158,6 +166,7 @@ class SettingsFragment : Fragment() {
         when (key) {
             Key.SCAN_FOLDER -> onScanFolderClicked(s.scanFolders.firstOrNull())
             Key.EXCLUDE -> onExcludeClicked(s.excludeFolders)
+            Key.HIDDEN -> viewModel.setSkipHidden(!s.skipHidden)
             Key.SCHEDULE -> onScheduleClicked(s.scanSchedule)
             Key.BIN -> findNavController().navigate(R.id.recycleBinFragment)
             // Turning archiving on always asks for the folder, which is also how it's changed.

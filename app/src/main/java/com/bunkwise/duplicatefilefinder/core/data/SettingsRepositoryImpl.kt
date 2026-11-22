@@ -2,6 +2,7 @@ package com.bunkwise.duplicatefilefinder.core.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import com.bunkwise.duplicatefilefinder.core.domain.model.KeepRule
 import com.bunkwise.duplicatefilefinder.core.domain.model.ScanSchedule
 import com.bunkwise.duplicatefilefinder.core.domain.repository.AppSettings
 import com.bunkwise.duplicatefilefinder.core.domain.repository.SettingsRepository
@@ -23,7 +24,9 @@ class SettingsRepositoryImpl(
             scanSchedule = p[PrefKeys.SCAN_SCHEDULE]
                 ?.let { runCatching { ScanSchedule.valueOf(it) }.getOrNull() }
                 ?: ScanSchedule.OFF,
-            archiveTreeUri = p[PrefKeys.ARCHIVE_TREE_URI]
+            archiveTreeUri = p[PrefKeys.ARCHIVE_TREE_URI],
+            keepRule = p[PrefKeys.KEEP_RULE]?.let { runCatching { KeepRule.valueOf(it) }.getOrNull() } ?: KeepRule.BEST,
+            skipHidden = p[PrefKeys.SKIP_HIDDEN] ?: false,
         )
     }
 
@@ -51,6 +54,14 @@ class SettingsRepositoryImpl(
 
     override suspend fun setScanSchedule(schedule: ScanSchedule) {
         context.appDataStore.edit { it[PrefKeys.SCAN_SCHEDULE] = schedule.name }
+    }
+
+    override suspend fun setKeepRule(rule: KeepRule) {
+        context.appDataStore.edit { it[PrefKeys.KEEP_RULE] = rule.name }
+    }
+
+    override suspend fun setSkipHidden(skip: Boolean) {
+        context.appDataStore.edit { it[PrefKeys.SKIP_HIDDEN] = skip }
     }
 
     override suspend fun setArchiveTreeUri(uri: String?) {

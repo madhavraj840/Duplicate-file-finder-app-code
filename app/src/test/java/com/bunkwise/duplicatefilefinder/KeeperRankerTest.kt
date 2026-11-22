@@ -2,6 +2,7 @@ package com.bunkwise.duplicatefilefinder
 
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileCategory
 import com.bunkwise.duplicatefilefinder.core.domain.model.FileItem
+import com.bunkwise.duplicatefilefinder.core.domain.model.KeepRule
 import com.bunkwise.duplicatefilefinder.core.engine.KeeperRanker
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -40,5 +41,16 @@ class KeeperRankerTest {
         val small = file(1, "/storage/emulated/0/DCIM/Camera/a.jpg", modified = 1_000, w = 800, h = 600)
         val large = file(2, "/storage/emulated/0/Download/a.jpg", modified = 2_000, w = 4000, h = 3000)
         assertEquals(2L, KeeperRanker.keeperId(listOf(small, large)))
+    }
+
+    @Test
+    fun keepRulesPickByAgeAndName() {
+        val oldLong = file(1, "/storage/emulated/0/Pictures/holiday_photo.jpg", modified = 1_000)
+        val newShort = file(2, "/storage/emulated/0/Pictures/h.jpg", modified = 9_000)
+        val files = listOf(oldLong, newShort)
+        assertEquals(1L, KeeperRanker.keeperId(files, KeepRule.OLDEST))
+        assertEquals(2L, KeeperRanker.keeperId(files, KeepRule.NEWEST))
+        assertEquals(2L, KeeperRanker.keeperId(files, KeepRule.SHORTEST_NAME))
+        assertEquals(1L, KeeperRanker.keeperId(files, KeepRule.LONGEST_NAME))
     }
 }

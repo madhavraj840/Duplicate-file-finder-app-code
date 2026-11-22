@@ -44,7 +44,7 @@ class AppContainer(context: Context) {
     // Data
     val fileEnumerator: FileEnumerator by lazy { FileEnumeratorImpl(appContext, settingsRepository) }
     val storageStats: StorageStatsProvider by lazy { StorageStatsProviderImpl() }
-    val scanResultRepository: ScanResultRepository by lazy { ScanResultRepositoryImpl(appContext) }
+    val scanResultRepository: ScanResultRepository by lazy { ScanResultRepositoryImpl(appContext, settingsRepository) }
     val settingsRepository: SettingsRepository by lazy { SettingsRepositoryImpl(appContext) }
     val quotaRepository: QuotaRepository by lazy { QuotaRepositoryImpl(appContext) }
     val recycleBin: RecycleBinRepositoryImpl by lazy { RecycleBinRepositoryImpl(appContext) }

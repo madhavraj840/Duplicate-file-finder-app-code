@@ -1,5 +1,7 @@
 package com.bunkwise.duplicatefilefinder.core.domain.repository
 
+import com.bunkwise.duplicatefilefinder.core.domain.model.KeepRule
+
 import com.bunkwise.duplicatefilefinder.core.common.Result
 import com.bunkwise.duplicatefilefinder.core.domain.error.AppError
 import com.bunkwise.duplicatefilefinder.core.domain.model.BinEntry
@@ -64,6 +66,8 @@ interface SettingsRepository {
     suspend fun setExcludeFolders(paths: Set<String>)
     suspend fun setScanSchedule(schedule: ScanSchedule)
     suspend fun setArchiveTreeUri(uri: String?)
+    suspend fun setKeepRule(rule: KeepRule)
+    suspend fun setSkipHidden(skip: Boolean)
 }
 
 data class AppSettings(
@@ -76,7 +80,11 @@ data class AppSettings(
     val excludeFolders: Set<String> = emptySet(),
     val scanSchedule: ScanSchedule = ScanSchedule.OFF,
     /** SAF tree URI where archive zips are written (Archive mode). */
-    val archiveTreeUri: String? = null
+    val archiveTreeUri: String? = null,
+    /** Which copy each group keeps (applied to every saved result). */
+    val keepRule: KeepRule = KeepRule.BEST,
+    /** Leave out files inside folders whose name starts with a dot (.thumbnails, .cache, ...). */
+    val skipHidden: Boolean = false,
 )
 
 /** Recycle bin move/restore/purge (ARCHITECTURE §7). */
